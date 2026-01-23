@@ -6,7 +6,7 @@
 (function () {
     // --- Configuration ---
     const TOTAL_FRAMES = 24;
-    const AUTO_PLAY_SPEED = 0.15; // Base auto-play speed (frames per tick)
+    const AUTO_PLAY_SPEED = 0.2; // Base auto-play speed (frames per tick)
     const FRICTION = 0.9;         // Inertia decay
     const SENSITIVITY = 10;       // Drag sensitivity
 
@@ -194,31 +194,39 @@
         state.images = [];
 
         let loadedCount = 0;
-        const imagePaths = [];
+
         for (let i = 1; i <= TOTAL_FRAMES; i++) {
             const num = i < 10 ? `0${i}` : `${i}`;
-            // Path structure: assets/sequences/{Style}/{Word}/v{Variant}/{Number}.jpg
-            imagePaths.push(`assets/sequences/${styleId}/${wordId}/v${variant}/${num}.jpg`);
-        }
+            // Base path structure without extension
+            const basePath = `assets/sequences/${styleId}/${wordId}/v${variant}/${num}`;
 
-        imagePaths.forEach((path, index) => {
-            const img = new Image();
-            img.src = path;
-            img.onload = () => {
+            // Try PNG first, then fallback to JPG
+            const imgPng = new Image();
+            const pngPath = `${basePath}.png`;
+            const jpgPath = `${basePath}.jpg`;
+
+            imgPng.src = pngPath;
+            imgPng.onload = () => {
+                state.images[i - 1] = imgPng; // 0-indexed
                 loadedCount++;
-                // Only store if we are still loading the same sequence 
-                // (handling race conditions if user switches quickly is complex, 
-                // but single threaded JS helps. We just check if state matches?)
-                // For simplicity: stick to basic logic.
-                state.images[index] = img;
-                checkLoadStatus(loadedCount, imagePaths.length);
+                checkLoadStatus(loadedCount, TOTAL_FRAMES);
             };
-            img.onerror = () => {
-                console.error(`Failed to load image: ${path}`);
-                loadedCount++;
-                checkLoadStatus(loadedCount, imagePaths.length);
+            imgPng.onerror = () => {
+                // PNG failed, try JPG
+                const imgJpg = new Image();
+                imgJpg.src = jpgPath;
+                imgJpg.onload = () => {
+                    state.images[i - 1] = imgJpg;
+                    loadedCount++;
+                    checkLoadStatus(loadedCount, TOTAL_FRAMES);
+                };
+                imgJpg.onerror = () => {
+                    console.error(`Failed to load image (png/jpg): ${basePath}`);
+                    loadedCount++; // Count to avoid hanging
+                    checkLoadStatus(loadedCount, TOTAL_FRAMES);
+                };
             };
-        });
+        }
     }
 
     function checkLoadStatus(current, total) {
