@@ -513,7 +513,8 @@ canvas {
 .reset-btn {
     position: absolute;
     bottom: 20px;
-    left: 50%;
+    left: 36.6%;
+    /* Centered relative to sequence container (15% + 43.125%/2) */
     transform: translateX(-50%);
     padding: 8px 24px;
     background: rgba(0, 255, 255, 0.1);

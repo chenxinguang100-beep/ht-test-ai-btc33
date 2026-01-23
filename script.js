@@ -524,18 +524,23 @@
     // --- Events ---
     function bindEvents() {
         // Button Interactions
+        // Swapped Logic as per request:
+        // Left Button -> Forward (Direction 1)
+        // Right Button -> Backward (Direction -1)
+
         if (btnLeft) {
             btnLeft.addEventListener('click', () => {
                 state.isAutoPlaying = true;
-                state.direction = -1;
+                state.direction = 1; // Now Forward
                 state.velocity = 0; // Reset any physics velocity
+                state.mode = 'MANUAL';
             });
         }
 
         if (btnRight) {
             btnRight.addEventListener('click', () => {
                 state.isAutoPlaying = true;
-                state.direction = 1;
+                state.direction = -1; // Now Backward
                 state.velocity = 0;
                 state.mode = 'MANUAL'; // Manual override
             });
