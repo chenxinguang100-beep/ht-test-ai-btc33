@@ -1,0 +1,511 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    /* Chrome/Safari */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* IE10+ */
+    user-select: none;
+    /* Standard */
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #0d0d12;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+/* Main Container to center the stage */
+.app-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    /* Changed to 40% black transparent as requested */
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* ... existing styles ... */
+
+/* Debug Panel */
+.debug-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.85);
+
+    @supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+        background: rgba(0, 0, 0, 0.6);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+
+    padding: 0;
+    /* Padding moved to children for collapse animation */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    font-size: 14px;
+    z-index: 100;
+    width: 200px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.debug-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.debug-panel h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #fff;
+    border: none;
+    padding: 0;
+}
+
+.toggle-icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.debug-panel.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.debug-content {
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    max-height: 200px;
+    /* Approximate max height */
+}
+
+.debug-panel.collapsed .debug-content {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top: none;
+    opacity: 0;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-items: center;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+    /* Slight dim valid for localized overlay */
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+    padding: 40px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 30px rgba(0, 168, 255, 0.1);
+
+    /* Cross-browser backdrop filter support */
+    @supports (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px)) {
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+    }
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #00d2ff;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+}
+
+.loading-text {
+    font-size: 16px;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+    font-weight: 300;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4:3 Stage */
+/* We use vmin to ensure it fits in either orientation, or fixed ratio */
+/* Main Window Frame */
+.window-frame {
+    position: relative;
+    /* 4:3 logic applies to the frame width, height is auto (Header + Stage) */
+    width: 80vmin;
+    /* Let the frame handle the window "look" */
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    /* Flex column to stack Header + Stage */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 4:3 Stage Area */
+.stage {
+    position: relative;
+    background-color: #1a1a24;
+    width: 100%;
+    /* Stage height is strictly related to aspect ratio, but here we explicitly set it */
+    height: 60vmin;
+    /* Bottom Only rounded */
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    /* Clip content within rounded bottom */
+}
+
+/* Background Image */
+.stage-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Fills the stage area */
+    background-image: url('assets/starry_bg.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+}
+
+/* macOS Window Header */
+.window-header {
+    height: 30px;
+    background: #2b2b36;
+    border-bottom: 1px solid #1a1a24;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    /* Top Only rounded */
+    border-radius: 12px 12px 0 0;
+    position: relative;
+    /* Not absolute anymore */
+    width: 100%;
+    z-index: 20;
+    flex-shrink: 0;
+}
+
+.traffic-lights {
+    display: flex;
+    gap: 8px;
+}
+
+.light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: block;
+}
+
+.light.red {
+    background-color: #ff5f56;
+    border: 0.5px solid #e0443e;
+}
+
+.light.yellow {
+    background-color: #ffbd2e;
+    border: 0.5px solid #dea123;
+}
+
+.light.green {
+    background-color: #27c93f;
+    border: 0.5px solid #1aab29;
+}
+
+.window-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-right: 52px;
+    /* Offset purely to center text visually considering lights width */
+    font-weight: 500;
+}
+
+/* 3:4 Image Sequence Area */
+.sequence-container {
+    position: absolute;
+    /* Calculated from Figma Spec (960x720 base) */
+    /* x=144, y=138, w=414, h=443 */
+    top: 6%;
+    /* 138 / 720 */
+    left: 15%;
+    /* 144 / 960 */
+    width: 43.125%;
+    /* 414 / 960 */
+    height: 76.66%;
+    /* Restored 3:4 aspect ratio: Width(43.125% * 1.333 stage_ratio) * 1.333 (4/3 image) / 0.75 (stage H) = complicated. Simply:  (Width_px * 1.333) / Height_px.  43.125%w on 4:3 stage -> 57.5%h relative to width units. 57.5/75 = 76.66% */
+
+    transform: none;
+    /* Removed centering transform */
+
+    /* Ensure it doesn't overflow stage height too much */
+    max-height: 100%;
+
+    z-index: 10;
+    cursor: -webkit-grab;
+    cursor: grab;
+}
+
+.sequence-container:active {
+    cursor: -webkit-grabbing;
+    cursor: grabbing;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Basic styling for the canvas placeholder */
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loading-fx {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 12;
+    pointer-events: none;
+    /* mix-blend-mode: screen; Removed to allow dark background to cover sequence */
+    background-color: rgba(0, 0, 0, 0.85);
+    /* Deeper dark background (was 0.6) */
+}
+
+.hidden {
+    display: none !important;
+}
+
+.overlay-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+    /* Above canvas (0-10), below controls (20) */
+    pointer-events: none;
+    /* Allow clicks to pass through to canvas */
+    object-fit: cover;
+}
+
+.interaction-hint {
+    position: absolute;
+    bottom: -25px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+}
+
+/* Side Buttons */
+.side-btn {
+    position: absolute;
+    top: 90%;
+    /* Moved lower as requested (was 50%) */
+    transform: translateY(-50%);
+    /* Glassmorphism background removed, using image */
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    /* Dimensions */
+    height: 72px;
+    /* 120% of 60px */
+    width: 120px;
+    /* 120% of 100px */
+    /* Force sufficient width for functionality */
+    /* min-width: 60px; Removed in favor of fixed width */
+
+    /* Image Asset */
+    background-image: url('assets/arrow_btn.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    /* Interactive state */
+    opacity: 1;
+    /* Default opaque */
+    z-index: 100;
+    /* Ensure above mask */
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.side-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+    /* Stronger glowing outline/shadow */
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+    /* specific scaleX for right handled below */
+}
+
+.side-btn:active {
+    transform: translateY(-50%) scale(0.9);
+}
+
+/* CSS Arrows Removed */
+
+.left-btn {
+    left: 4%;
+    /* Moved outwards */
+    animation: breathLeft 2s infinite ease-in-out;
+}
+
+.right-btn {
+    right: 30%;
+    /* Moved outwards (smaller % from right) */
+    transform: translateY(-50%) scaleX(-1);
+    animation: breathRight 2s infinite ease-in-out;
+}
+
+@keyframes breathLeft {
+
+    0%,
+    100% {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    50% {
+        transform: translateY(-50%) translateX(-6px);
+        /* Move Left */
+    }
+}
+
+@keyframes breathRight {
+
+    0%,
+    100% {
+        transform: translateY(-50%) scaleX(-1) translateX(0);
+    }
+
+    50% {
+        /* In flipped X context, translateX(-6px) moves visually Right (Outwards) */
+        transform: translateY(-50%) scaleX(-1) translateX(-6px);
+    }
+}
+
+/* Hover/Active states for Right Button need to preserve scaleX(-1) */
+.right-btn:hover {
+    transform: translateY(-50%) scaleX(-1) scale(1.1);
+}
+
+.right-btn:active {
+    transform: translateY(-50%) scaleX(-1) scale(0.9);
+}
+
+/* Duplicates removed */
+
+/* Top-Right Info Panel -> Vertically Centered JSON Panel */
+.info-panel {
+    position: absolute;
+    top: 50%;
+    /* Vertically centered */
+    right: 2.5vmin;
+    /* Replaced 20px */
+    transform: translateY(-50%);
+    z-index: 21;
+    /* Above mask */
+
+    width: 28%;
+    /* Added slightly more width flexibility */
+    max-width: 40vmin;
+    /* Replaced 300px */
+
+    background: rgba(0, 20, 50, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 1vmin;
+    /* Replaced 8px */
+    padding: 2vmin;
+    /* Replaced 15px */
+    box-shadow: 0 0 2vmin rgba(0, 255, 255, 0.1);
+
+    text-align: left;
+    color: rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+    font-family: 'Courier New', Courier, monospace;
+    padding-bottom: 2vmin;
+}
+
+.panel-title {
+    font-size: 1.8vmin;
+    /* Reduced from 2.2vmin */
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 1vmin;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.panel-content {
+    display: inline-block;
+    text-align: left;
+    font-size: 1.5vmin;
+    /* Reduced from 2vmin */
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.key-text {
+    color: #fff;
+    font-weight: bold;
+}
+
+.value-text {
+    color: #00f0ff;
+    /* Fluorescent Blue */
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* Old .info-line styles removed as we insert HTML directly now */

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>H5 Sequence Player</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Loading Overlay -->
+
+
+        <!-- Main Window Frame -->
+        <div class="window-frame">
+            <!-- macOS Window Header -->
+            <div class="window-header">
+                <div class="traffic-lights">
+                    <span class="light red"></span>
+                    <span class="light yellow"></span>
+                    <span class="light green"></span>
+                </div>
+                <div class="window-title">H5 Sequence Player</div>
+            </div>
+
+            <!-- 4:3 Stage -->
+            <div class="stage">
+
+                <div class="stage-bg"></div>
+                <img src="assets/exclude.png" class="overlay-mask" alt="overlay">
+
+                <!-- 3:4 Image Display Area -->
+                <div class="sequence-container" id="sequenceContainer">
+                    <!-- Loading Overlay Scoped Here -->
+                    <div id="loadingOverlay" class="loading-overlay hidden">
+                        <div class="loading-text">正在生成中，请稍候...</div>
+                    </div>
+                    <canvas id="matrixCanvas" class="loading-fx hidden"></canvas>
+                    <canvas id="sequenceCanvas" width="300" height="400"></canvas>
+                    <div class="interaction-hint">拖动即可旋转</div>
+                </div>
+
+
+
+                <!-- Side Controls -->
+                <button id="btnLeft" class="side-btn left-btn" aria-label="Previous"></button>
+                <button id="btnRight" class="side-btn right-btn" aria-label="Next"></button>
+
+                <!-- Top-Right Info Panel -->
+                <div class="info-panel">
+                    <div class="info-line">风格：<span id="styleLabel">--</span></div>
+                    <div class="info-line">描述：<span id="wordLabel">--</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Panel (Bottom Left) -->
+        <div class="debug-panel" id="debugPanel">
+            <div class="debug-header" id="debugToggle">
+                <h3>Mock 调试</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="debug-content">
+                <div class="control-group">
+                    <label for="wordSelect">词语:</label>
+                    <select id="wordSelect">
+                        <option value="Word1">奇妙的冰雪女孩</option>
+                        <option value="Word2">柴犬一生爱自由</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="styleSelect">风格:</label>
+                    <select id="styleSelect">
+                        <option value="Style1">毛毡</option>
+                        <option value="Style2">水晶</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="simulateBtn"
+                        style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; cursor: pointer;">
+                        模拟接收指令 (Simulate)
+                    </button>
+                </div>
+                <!-- New Debug Button for Matrix Rain -->
+                <div class="control-group">
+                    <button id="toggleMatrixBtn"
+                        style="width: 100%; padding: 8px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); color: #0ff; border-radius: 4px; cursor: pointer; margin-top: 5px;">
+                        查看代码雨效果 (Toggle FX)
+                    </button>
+                </div>
+                <div class="status-display">
+                    当前: <span id="currentStatus">第 1 帧</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
