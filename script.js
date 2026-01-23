@@ -273,6 +273,25 @@
 
         if (!state.assetsLoaded) return;
 
+        // Reset Logic (High Priority)
+        if (state.isResetting) {
+            // Fast return to 0
+            const diff = 0 - state.currentFrame;
+            if (Math.abs(diff) < 0.5) {
+                state.currentFrame = 0;
+                state.velocity = 0;
+                state.isResetting = false;
+                state.isAutoPlaying = false; // Stop after reset
+                state.mode = 'MANUAL';
+            } else {
+                // Determine shortest path? No, just go direct for "rewind" feel or shortest?
+                // Simple rewind:
+                state.currentFrame += (diff * 0.1); // Ease out
+            }
+            updateFrameState(state.currentFrame);
+            return;
+        }
+
         // 1. Inertia / Momentum
         // If velocity is faster than auto-play speed, we are in "Inertia Phase"
         if (Math.abs(state.velocity) > AUTO_PLAY_SPEED) {
@@ -281,13 +300,53 @@
 
             // Sync direction in case velocity flipped (unlikely with simple friction but good for safety)
             if (state.velocity !== 0) state.direction = Math.sign(state.velocity);
+
+            // Cancel any idle sway state if user interacted
+            state.mode = 'MANUAL';
         }
         // 2. Base Auto-Play
         // If velocity dropped below threshold (or never had high velocity), we switch to constant speed
         else if (state.isAutoPlaying) {
             // Ensure velocity is zeroed if we transitioned from inertia
             state.velocity = 0;
-            updateFrameState(state.currentFrame + (AUTO_PLAY_SPEED * state.direction));
+
+            const nextFrame = state.currentFrame + (AUTO_PLAY_SPEED * state.direction);
+            updateFrameState(nextFrame);
+
+            // Check for full loop completion to trigger sway
+            // Only if moving forward and we pass 0 (roughly) or pass total frames
+            // Simplistic check: if we accumulated > TOTAL_FRAMES since start? 
+            // Better: Just check if we hit frame 0 again after being > 10?
+            // Actually, user wants "after first loop".
+            // Let's count total accumulated delta.
+            if (!state.hasCompletedInitialLoop) {
+                // We don't track total rotation, let's assume if currentFrame wraps around 
+                // It's hard to catch exact wrap. 
+                // Alternative: increment a counter and check against TOTAL_FRAMES
+                state.accumulatedFrames = (state.accumulatedFrames || 0) + AUTO_PLAY_SPEED;
+                if (state.accumulatedFrames >= TOTAL_FRAMES) {
+                    state.hasCompletedInitialLoop = true;
+                    // Switch to IDLE SWAY
+                    state.isAutoPlaying = false;
+                    state.mode = 'IDLE_SWAY';
+                    state.swayTime = 0;
+                    // Force frame to 0 to start sway cleanly? Or just blend in.
+                    // state.currentFrame = 0; 
+                }
+            }
+        }
+        // 3. Idle Sway
+        else if (state.mode === 'IDLE_SWAY') {
+            state.velocity = 0;
+            state.swayTime = (state.swayTime || 0) + 0.05; // Time step
+            // Swing +/- 3 frames. Math.sin returns -1 to 1.
+            // Center is 0. 
+            // 3 * sin(time)
+            const swayOffset = 3 * Math.sin(state.swayTime);
+            // We want to sway around frame 0.
+            // So frame is just swayOffset.
+            // But we need to handle negative frames in updateFrameState correctly (it does).
+            updateFrameState(swayOffset);
         }
     }
 
@@ -478,6 +537,15 @@
                 state.isAutoPlaying = true;
                 state.direction = 1;
                 state.velocity = 0;
+                state.mode = 'MANUAL'; // Manual override
+            });
+        }
+
+        const btnReset = document.getElementById('btnReset');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                state.isResetting = true;
+                state.mode = 'RESET';
             });
         }
 
