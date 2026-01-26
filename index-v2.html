@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>H5 Sequence Player - HoloTech</title>
+    <link rel="stylesheet" href="style-v2.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Animated Grid Background -->
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+
+        <!-- Main HoloFrame -->
+        <div class="holo-frame">
+            <!-- Top HUD Header -->
+            <div class="hud-header">
+                <div class="corner-accent top-left"></div>
+                <div class="corner-accent top-right"></div>
+                <div class="header-content">
+                    <span class="status-indicator"></span>
+                    <span class="header-title">HOLO-SEQUENCE VIEWER</span>
+                    <span class="header-version">v2.0</span>
+                </div>
+            </div>
+
+            <!-- Main Stage -->
+            <div class="stage">
+                <!-- Sequence Container -->
+                <div class="sequence-container" id="sequenceContainer">
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="loading-overlay hidden">
+                        <div class="loading-text">正在生成中，请稍候...</div>
+                    </div>
+                    <canvas id="matrixCanvas" class="loading-fx hidden"></canvas>
+                    <canvas id="sequenceCanvas" width="300" height="400"></canvas>
+
+                    <!-- Holographic Frame Effect -->
+                    <div class="holo-border"></div>
+                </div>
+
+                <!-- Interaction Hint -->
+                <div class="interaction-hint">
+                    <span class="hint-icon">◇</span>
+                    拖动即可旋转
+                    <span class="hint-icon">◇</span>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-panel">
+                    <button id="btnLeft" class="hex-btn" aria-label="Previous">
+                        <span class="btn-icon">◀</span>
+                        <span class="btn-label">左旋</span>
+                    </button>
+                    <button id="btnReset" class="hex-btn primary" aria-label="Reset">
+                        <span class="btn-icon">⟲</span>
+                        <span class="btn-label">回正</span>
+                    </button>
+                    <button id="btnRight" class="hex-btn" aria-label="Next">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">右旋</span>
+                    </button>
+                </div>
+
+                <!-- Right HUD Info Panel -->
+                <div class="info-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">◈</span>
+                        <span class="panel-title">DATA STREAM</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="info-row">
+                            <span class="info-key">STYLE://</span>
+                            <span class="info-value" id="styleLabel">--</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-key">DESC://</span>
+                            <span class="info-value" id="wordLabel">--</span>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <div class="data-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom HUD -->
+            <div class="hud-footer">
+                <div class="corner-accent bottom-left"></div>
+                <div class="corner-accent bottom-right"></div>
+                <div class="footer-stats">
+                    <span class="stat-item">
+                        <span class="stat-label">FRAME</span>
+                        <span class="stat-value" id="currentStatus">01/24</span>
+                    </span>
+                    <span class="stat-item">
+                        <span class="stat-label">STATUS</span>
+                        <span class="stat-value status-active">ACTIVE</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Panel (Bottom Left) -->
+        <div class="debug-panel" id="debugPanel">
+            <div class="debug-header" id="debugToggle">
+                <h3>Mock 调试</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="debug-content">
+                <div class="control-group">
+                    <label for="wordSelect">词语:</label>
+                    <select id="wordSelect">
+                        <option value="Word1">奇妙的冰雪女孩</option>
+                        <option value="Word2">柴犬一生爱自由</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="styleSelect">风格:</label>
+                    <select id="styleSelect">
+                        <option value="Style1">毛毡</option>
+                        <option value="Style2">水晶</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="simulateBtn" class="debug-btn">
+                        模拟接收指令 (Simulate)
+                    </button>
+                </div>
+                <div class="control-group">
+                    <button id="toggleMatrixBtn" class="debug-btn matrix-btn">
+                        查看代码雨效果 (Toggle FX)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script-v2.js"></script>
+</body>
+
+</html>

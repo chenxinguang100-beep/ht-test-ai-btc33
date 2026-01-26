@@ -1,5 +1,6 @@
 /**
- * H5 Sequence Player Script with Physics Interaction
+ * H5 Sequence Player V2 - HoloTech Edition
+ * High-Tech UI with Physics Interaction
  * Compatible with Chrome 59+, Touch devices, and Mouse input.
  */
 
@@ -13,8 +14,8 @@
     // Debug Mode - Enable via URL param ?debug=true
     const DEBUG_MODE = new URLSearchParams(window.location.search).get('debug') === 'true';
 
-    // Fallback placeholder for failed images (1x1 transparent pixel as data URL)
-    const FALLBACK_IMG_SRC = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"%3E%3Crect fill="%231a1a24" width="300" height="400"/%3E%3Ctext x="150" y="200" text-anchor="middle" fill="%23666" font-size="14"%3E%E5%9B%BE%E7%89%87%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';
+    // Fallback placeholder for failed images (V2 themed)
+    const FALLBACK_IMG_SRC = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"%3E%3Crect fill="%230a0a0f" width="300" height="400"/%3E%3Crect fill="none" stroke="%2300f0ff" stroke-width="2" x="10" y="10" width="280" height="380"/%3E%3Ctext x="150" y="200" text-anchor="middle" fill="%2300f0ff" font-family="monospace" font-size="12"%3ELOAD ERROR%3C/text%3E%3C/svg%3E';
 
     // Configuration - loaded from config.json
     let CONFIG = null;
@@ -455,7 +456,8 @@
         // Only update text on whole frame change to reduce DOM thrashing? 
         // Or just every frame (simple).
         if (currentStatus) {
-            currentStatus.textContent = `${CONFIG.words[state.word] || state.word} - ${CONFIG.styles[state.style] || state.style} [第 ${frameIndex + 1} 帧]`;
+            const frameNum = String(frameIndex + 1).padStart(2, '0');
+            currentStatus.textContent = `${frameNum}/${TOTAL_FRAMES}`;
         }
         // Legacy wordLabel update removed
     }
