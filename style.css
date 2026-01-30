@@ -337,7 +337,7 @@ canvas {
     z-index: 12;
     pointer-events: none;
     /* mix-blend-mode: screen; Removed to allow dark background to cover sequence */
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.5);
     /* Deeper dark background (was 0.6) */
 }
 
@@ -548,4 +548,19 @@ canvas {
 
 .reset-btn:active {
     transform: scale(0.95);
+}
+
+/* Star Burst Effect */
+.star-burst {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    /* Center on coordinate */
+    z-index: 1;
+    /* Will be adjusted by JS to be behind floater */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }

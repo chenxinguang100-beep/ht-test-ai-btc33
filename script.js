@@ -287,516 +287,516 @@
             // Base path structure without extension
             const basePath = `assets/sequences/${styleId}/${wordId}/v${variant}/${num}`;
 
-            // Try PNG first, then fallback to JPG, then WebP
-            const imgPng = new Image();
+            // Try WebP first (Optimized), then fallback to PNG and JPG
+            const imgWebp = new Image();
+            const webpPath = `${basePath}.webp`;
             const pngPath = `${basePath}.png`;
             const jpgPath = `${basePath}.jpg`;
-            const webpPath = `${basePath}.webp`;
             const frameIndex = i - 1; // Capture for closure
 
-            imgPng.src = pngPath;
-            imgPng.onload = () => {
-                state.images[frameIndex] = imgPng;
+            imgWebp.src = webpPath;
+            imgWebp.onload = () => {
+                state.images[frameIndex] = imgWebp;
                 loadedCount++;
                 checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
             };
-            imgPng.onerror = () => {
-                // PNG failed, try JPG
-                const imgJpg = new Image();
-                imgJpg.src = jpgPath;
-                imgJpg.onload = () => {
-                    state.images[frameIndex] = imgJpg;
+            imgWebp.onerror = () => {
+                // WebP failed, try PNG
+                const imgPng = new Image();
+                imgPng.src = pngPath;
+                imgPng.onload = () => {
+                    state.images[frameIndex] = imgPng;
                     loadedCount++;
                     checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
                 };
-                imgJpg.onerror = () => {
-                    // JPG failed, try WebP
-                    const imgWebp = new Image();
-                    imgWebp.src = webpPath;
-                    imgWebp.onload = () => {
-                        state.images[frameIndex] = imgWebp;
+                imgPng.onerror = () => {
+                    // PNG failed, try JPG
+                    const imgJpg = new Image();
+                    imgJpg.src = jpgPath;
+                    imgJpg.onload = () => {
+                        state.images[frameIndex] = imgJpg;
                         loadedCount++;
                         checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
                     };
-                    imgWebp.onerror = () => {
-                        // All formats failed - use fallback placeholder
-                        console.error(`Failed to load image (png/jpg/webp): ${basePath}`);
-                        const fallbackImg = new Image();
+                    imgJpg.onerror = () => {
+                        // All formats failed
+                        console.warn(`Frame ${i} failed to load (WebP, PNG, JPG). Using placeholder.`);
+                        failedCount++;
+                        // Use 1x1 fallback to prevent crash in draw loop
                         fallbackImg.src = FALLBACK_IMG_SRC;
                         state.images[frameIndex] = fallbackImg;
-                        failedCount++;
-                        loadedCount++;
                         checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
                     };
                 };
             };
+        };
+    };
+}
+
+function checkLoadStatus(current, failed, total) {
+    if (current >= total) {
+        state.assetsLoaded = true;
+
+        // Show warning if some images failed to load
+        if (failed > 0) {
+            console.warn(`${failed} of ${total} images failed to load. Using fallback placeholders.`);
+            showLoadingError(`部分图片加载失败 (${failed}/${total})`);
+        }
+
+        // Enforce minimum 3 seconds loading time
+        const elapsed = Date.now() - state.loadingStartTime;
+        const minDuration = 3000;
+        const remaining = Math.max(0, minDuration - elapsed);
+
+        setTimeout(() => {
+            if (loadTimeoutId) clearTimeout(loadTimeoutId); // Clear timeout on success
+            if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
+            matrixEffect.stop(); // Stop Matrix Rain
+            sequenceCanvas.classList.remove('hidden'); // Reveal sequence
+            // Auto-play is already enabled by default in state
+        }, remaining);
+    }
+}
+
+// Show loading error message to user (Targeting Sequence Overlay)
+function showLoadingError(message) {
+    const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
+    const loadingText = target.querySelector('.loading-text');
+    if (loadingText) {
+        loadingText.innerHTML = `<span style="color: #ff6b6b; font-size: 14px;">${message}</span>`;
+    }
+}
+
+function updateLoadingText(text) {
+    // Defaults to sequence overlay as that's where dynamic updates happen
+    const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
+    const loadingText = target.querySelector('.loading-text');
+    if (loadingText) {
+        loadingText.textContent = text;
+        loadingText.style.color = '#fff'; // Reset color
+    }
+}
+
+function handleLoadTimeout() {
+    if (state.assetsLoaded) return; // Race condition check
+    console.error('Loading timed out (30s)');
+    updateLoadingText('生成失败 (超时)');
+    matrixEffect.stop();
+    // Keep overlay visible to show error
+}
+
+function resizeCanvas() {
+    if (!canvas) return;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+// --- Main Loop (Physics & Rendering) ---
+function startLoop() {
+    if (!animationId) {
+        loop();
+    }
+}
+
+function loop() {
+    updatePhysics();
+    render();
+    animationId = requestAnimationFrame(loop);
+}
+
+function updatePhysics() {
+    if (state.isDragging) return; // Physics paused while holding
+
+    if (!state.assetsLoaded) return;
+
+    // Reset Logic (High Priority)
+    if (state.isResetting) {
+        // Fast return to 0
+        const diff = 0 - state.currentFrame;
+        if (Math.abs(diff) < 0.5) {
+            state.currentFrame = 0;
+            state.velocity = 0;
+            state.isResetting = false;
+            state.isAutoPlaying = false; // Stop after reset
+            state.mode = 'MANUAL';
+        } else {
+            // Determine shortest path? No, just go direct for "rewind" feel or shortest?
+            // Simple rewind:
+            state.currentFrame += (diff * 0.1); // Ease out
+        }
+        updateFrameState(state.currentFrame);
+        return;
+    }
+
+    // 1. Inertia / Momentum
+    // If velocity is faster than auto-play speed, we are in "Inertia Phase"
+    if (Math.abs(state.velocity) > AUTO_PLAY_SPEED) {
+        updateFrameState(state.currentFrame + state.velocity);
+        state.velocity *= FRICTION; // Decay
+
+        // Sync direction in case velocity flipped (unlikely with simple friction but good for safety)
+        if (state.velocity !== 0) state.direction = Math.sign(state.velocity);
+
+        // Cancel any idle sway state if user interacted
+        state.mode = 'MANUAL';
+    }
+    // 2. Base Auto-Play
+    // If velocity dropped below threshold (or never had high velocity), we switch to constant speed
+    else if (state.isAutoPlaying) {
+        // Ensure velocity is zeroed if we transitioned from inertia
+        state.velocity = 0;
+
+        const nextFrame = state.currentFrame + (AUTO_PLAY_SPEED * state.direction);
+        updateFrameState(nextFrame);
+
+        // Check for full loop completion - pause at first frame then repeat
+        state.accumulatedFrames = (state.accumulatedFrames || 0) + AUTO_PLAY_SPEED;
+        if (state.accumulatedFrames >= TOTAL_FRAMES) {
+            // Completed one full loop - pause briefly at first frame
+            state.currentFrame = 0;
+            state.accumulatedFrames = 0;
+            state.isAutoPlaying = false;
+            state.mode = 'PAUSE_AT_START';
+            state.pauseStartTime = Date.now();
         }
     }
-
-    function checkLoadStatus(current, failed, total) {
-        if (current >= total) {
-            state.assetsLoaded = true;
-
-            // Show warning if some images failed to load
-            if (failed > 0) {
-                console.warn(`${failed} of ${total} images failed to load. Using fallback placeholders.`);
-                showLoadingError(`部分图片加载失败 (${failed}/${total})`);
-            }
-
-            // Enforce minimum 3 seconds loading time
-            const elapsed = Date.now() - state.loadingStartTime;
-            const minDuration = 3000;
-            const remaining = Math.max(0, minDuration - elapsed);
-
-            setTimeout(() => {
-                if (loadTimeoutId) clearTimeout(loadTimeoutId); // Clear timeout on success
-                if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
-                matrixEffect.stop(); // Stop Matrix Rain
-                sequenceCanvas.classList.remove('hidden'); // Reveal sequence
-                // Auto-play is already enabled by default in state
-            }, remaining);
+    // 3. Pause at start - wait briefly then restart auto-play
+    else if (state.mode === 'PAUSE_AT_START') {
+        const PAUSE_DURATION = 1500; // 1.5 seconds pause
+        const elapsed = Date.now() - state.pauseStartTime;
+        if (elapsed >= PAUSE_DURATION) {
+            // Resume auto-play for next loop - preserve current direction
+            state.isAutoPlaying = true;
+            // Keep state.direction as is (don't reset to 1)
+            state.mode = 'AUTO';
         }
     }
+}
 
-    // Show loading error message to user (Targeting Sequence Overlay)
-    function showLoadingError(message) {
-        const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
-        const loadingText = target.querySelector('.loading-text');
-        if (loadingText) {
-            loadingText.innerHTML = `<span style="color: #ff6b6b; font-size: 14px;">${message}</span>`;
-        }
+// Pure state update without strictly forcing render (render called in loop)
+function updateFrameState(newVal) {
+    let normalized = newVal % TOTAL_FRAMES;
+    if (normalized < 0) normalized += TOTAL_FRAMES;
+    state.currentFrame = normalized;
+}
+
+// --- Rendering ---
+function render() {
+    const width = canvas.width / window.devicePixelRatio;
+    const height = canvas.height / window.devicePixelRatio;
+
+    if (!state.assetsLoaded) return;
+
+    // Draw current frame
+    // Use floor to get integer index, but state.currentFrame is float for smoothness
+    const frameIndex = Math.floor(state.currentFrame);
+    const img = state.images[frameIndex];
+
+    // Optimization: Only clear and draw if we have a valid image
+    // This prevents flashing if a specific frame failed to load (network error)
+    if (img) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
     }
 
-    function updateLoadingText(text) {
-        // Defaults to sequence overlay as that's where dynamic updates happen
-        const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
-        const loadingText = target.querySelector('.loading-text');
-        if (loadingText) {
-            loadingText.textContent = text;
-            loadingText.style.color = '#fff'; // Reset color
-        }
+    // Update UI logic
+    // Only update text on whole frame change to reduce DOM thrashing? 
+    // Or just every frame (simple).
+    if (currentStatus) {
+        currentStatus.textContent = `${CONFIG.words[state.word] || state.word} - ${CONFIG.styles[state.style] || state.style} [第 ${frameIndex + 1} 帧]`;
     }
+    // Legacy wordLabel update removed
+}
 
-    function handleLoadTimeout() {
-        if (state.assetsLoaded) return; // Race condition check
-        console.error('Loading timed out (30s)');
-        updateLoadingText('生成失败 (超时)');
-        matrixEffect.stop();
-        // Keep overlay visible to show error
-    }
 
-    function resizeCanvas() {
-        if (!canvas) return;
-        const rect = container.getBoundingClientRect();
-        canvas.width = rect.width * window.devicePixelRatio;
-        canvas.height = rect.height * window.devicePixelRatio;
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
 
-    // --- Main Loop (Physics & Rendering) ---
-    function startLoop() {
-        if (!animationId) {
-            loop();
-        }
-    }
+function updateTextDisplay(styleId, wordId) {
+    const infoPanel = document.querySelector('.info-panel');
+    if (!infoPanel) return;
 
-    function loop() {
-        updatePhysics();
-        render();
-        animationId = requestAnimationFrame(loop);
-    }
+    // Clear previous typing
+    if (state.typingInterval) clearInterval(state.typingInterval);
+    infoPanel.innerHTML = '';
 
-    function updatePhysics() {
-        if (state.isDragging) return; // Physics paused while holding
+    const title = "生成信息";
+    const contentMap = [
+        { key: "style", value: getStyleName(styleId) },
+        { key: "word", value: getWordName(wordId) },
+        { key: "prompt", value: getPrompt(styleId, wordId, state.currentVariant) }
+    ];
 
-        if (!state.assetsLoaded) return;
+    // Create Title
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'panel-title';
+    titleDiv.textContent = title;
+    infoPanel.appendChild(titleDiv);
 
-        // Reset Logic (High Priority)
-        if (state.isResetting) {
-            // Fast return to 0
-            const diff = 0 - state.currentFrame;
-            if (Math.abs(diff) < 0.5) {
-                state.currentFrame = 0;
-                state.velocity = 0;
-                state.isResetting = false;
-                state.isAutoPlaying = false; // Stop after reset
-                state.mode = 'MANUAL';
-            } else {
-                // Determine shortest path? No, just go direct for "rewind" feel or shortest?
-                // Simple rewind:
-                state.currentFrame += (diff * 0.1); // Ease out
-            }
-            updateFrameState(state.currentFrame);
+    // Content Container
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'panel-content';
+    infoPanel.appendChild(contentDiv);
+
+    // We will push "tokens" to a queue to type out
+    let queue = [];
+
+    contentMap.forEach(item => {
+        queue.push({ text: item.key + ": ", class: "key-text" });
+        queue.push({ text: item.value + "\n", class: "value-text" });
+    });
+
+    let currentTokenIndex = 0;
+    let charIndex = 0;
+    let currentSpan = null;
+
+    // Function to process typing
+    state.typingInterval = setInterval(() => {
+        if (currentTokenIndex >= queue.length) {
+            clearInterval(state.typingInterval);
+            state.typingInterval = null;
             return;
         }
 
-        // 1. Inertia / Momentum
-        // If velocity is faster than auto-play speed, we are in "Inertia Phase"
-        if (Math.abs(state.velocity) > AUTO_PLAY_SPEED) {
-            updateFrameState(state.currentFrame + state.velocity);
-            state.velocity *= FRICTION; // Decay
+        const token = queue[currentTokenIndex];
 
-            // Sync direction in case velocity flipped (unlikely with simple friction but good for safety)
-            if (state.velocity !== 0) state.direction = Math.sign(state.velocity);
-
-            // Cancel any idle sway state if user interacted
-            state.mode = 'MANUAL';
+        if (!currentSpan) {
+            currentSpan = document.createElement('span');
+            currentSpan.className = token.class;
+            contentDiv.appendChild(currentSpan);
         }
-        // 2. Base Auto-Play
-        // If velocity dropped below threshold (or never had high velocity), we switch to constant speed
-        else if (state.isAutoPlaying) {
-            // Ensure velocity is zeroed if we transitioned from inertia
-            state.velocity = 0;
 
-            const nextFrame = state.currentFrame + (AUTO_PLAY_SPEED * state.direction);
-            updateFrameState(nextFrame);
+        // Append one char
+        const char = token.text[charIndex];
+        currentSpan.textContent += char;
+        charIndex++;
 
-            // Check for full loop completion - pause at first frame then repeat
-            state.accumulatedFrames = (state.accumulatedFrames || 0) + AUTO_PLAY_SPEED;
-            if (state.accumulatedFrames >= TOTAL_FRAMES) {
-                // Completed one full loop - pause briefly at first frame
-                state.currentFrame = 0;
-                state.accumulatedFrames = 0;
-                state.isAutoPlaying = false;
-                state.mode = 'PAUSE_AT_START';
-                state.pauseStartTime = Date.now();
-            }
+        // Check if token done
+        if (charIndex >= token.text.length) {
+            currentTokenIndex++;
+            charIndex = 0;
+            currentSpan = null; // Reset for next token
         }
-        // 3. Pause at start - wait briefly then restart auto-play
-        else if (state.mode === 'PAUSE_AT_START') {
-            const PAUSE_DURATION = 1500; // 1.5 seconds pause
-            const elapsed = Date.now() - state.pauseStartTime;
-            if (elapsed >= PAUSE_DURATION) {
-                // Resume auto-play for next loop - preserve current direction
-                state.isAutoPlaying = true;
-                // Keep state.direction as is (don't reset to 1)
-                state.mode = 'AUTO';
-            }
-        }
+
+    }, 10); // Fast typing speed (10ms)
+}
+
+// --- Interaction ---
+function handleStart(x) {
+    state.isDragging = true;
+    state.startX = x;
+    state.lastX = x;
+    state.lastTime = Date.now();
+    state.startFrame = state.currentFrame;
+
+    state.velocity = 0;         // Kill momentum
+    state.isAutoPlaying = false;// Stop base auto-play
+
+    container.style.cursor = 'grabbing';
+}
+
+function handleMove(x) {
+    if (!state.isDragging) return;
+
+    const now = Date.now();
+    const deltaTime = now - state.lastTime;
+    const deltaX = x - state.startX; // Total movement
+
+    // Direction: Drag Left -> Forward (Positive), Drag Right -> Backward (Negative)
+    const frameDelta = -deltaX / SENSITIVITY; // Inverted: left=+, right=-
+    updateFrameState(state.startFrame + frameDelta);
+
+    // Update direction based on movement (inverted)
+    if (deltaX !== 0) {
+        state.direction = deltaX < 0 ? 1 : -1; // Left drag = forward, Right drag = backward
     }
 
-    // Pure state update without strictly forcing render (render called in loop)
-    function updateFrameState(newVal) {
-        let normalized = newVal % TOTAL_FRAMES;
-        if (normalized < 0) normalized += TOTAL_FRAMES;
-        state.currentFrame = normalized;
+    // Calculate Instant Velocity
+    // v = dX / dt 
+    // We want frames per tick (16ms).
+    // deltaX per Sensitivity gives frames moved.
+    // We calculate how many frames moved in this step.
+    const stepX = x - state.lastX;
+    if (deltaTime > 0) {
+        // Rough estimate of frames per tick
+        // limit to avoid huge jumps
+        const v = (stepX / SENSITIVITY);
+        // Smooth it a bit?
+        state.velocity = v;
     }
 
-    // --- Rendering ---
-    function render() {
-        const width = canvas.width / window.devicePixelRatio;
-        const height = canvas.height / window.devicePixelRatio;
+    state.lastX = x;
+    state.lastTime = now;
+}
 
-        if (!state.assetsLoaded) return;
+function handleEnd() {
+    state.isDragging = false;
+    container.style.cursor = 'grab';
 
-        // Draw current frame
-        // Use floor to get integer index, but state.currentFrame is float for smoothness
-        const frameIndex = Math.floor(state.currentFrame);
-        const img = state.images[frameIndex];
+    // Cap max velocity
+    const MAX_VEL = 3;
+    if (state.velocity > MAX_VEL) state.velocity = MAX_VEL;
+    if (state.velocity < -MAX_VEL) state.velocity = -MAX_VEL;
 
-        // Optimization: Only clear and draw if we have a valid image
-        // This prevents flashing if a specific frame failed to load (network error)
-        if (img) {
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
-        }
-
-        // Update UI logic
-        // Only update text on whole frame change to reduce DOM thrashing? 
-        // Or just every frame (simple).
-        if (currentStatus) {
-            currentStatus.textContent = `${CONFIG.words[state.word] || state.word} - ${CONFIG.styles[state.style] || state.style} [第 ${frameIndex + 1} 帧]`;
-        }
-        // Legacy wordLabel update removed
+    // If velocity is lower than auto play speed, just resume auto play immediately
+    if (Math.abs(state.velocity) <= AUTO_PLAY_SPEED) {
+        state.velocity = 0;
+        state.isAutoPlaying = true;
     }
+    // Otherwise inertia loop takes over
+}
 
+// --- Events ---
+function bindEvents() {
+    // Button Interactions
+    // Swapped Logic as per request:
+    // Left Button -> Forward (Direction 1)
+    // Right Button -> Backward (Direction -1)
 
-
-    function updateTextDisplay(styleId, wordId) {
-        const infoPanel = document.querySelector('.info-panel');
-        if (!infoPanel) return;
-
-        // Clear previous typing
-        if (state.typingInterval) clearInterval(state.typingInterval);
-        infoPanel.innerHTML = '';
-
-        const title = "生成信息";
-        const contentMap = [
-            { key: "style", value: getStyleName(styleId) },
-            { key: "word", value: getWordName(wordId) },
-            { key: "prompt", value: getPrompt(styleId, wordId, state.currentVariant) }
-        ];
-
-        // Create Title
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'panel-title';
-        titleDiv.textContent = title;
-        infoPanel.appendChild(titleDiv);
-
-        // Content Container
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'panel-content';
-        infoPanel.appendChild(contentDiv);
-
-        // We will push "tokens" to a queue to type out
-        let queue = [];
-
-        contentMap.forEach(item => {
-            queue.push({ text: item.key + ": ", class: "key-text" });
-            queue.push({ text: item.value + "\n", class: "value-text" });
-        });
-
-        let currentTokenIndex = 0;
-        let charIndex = 0;
-        let currentSpan = null;
-
-        // Function to process typing
-        state.typingInterval = setInterval(() => {
-            if (currentTokenIndex >= queue.length) {
-                clearInterval(state.typingInterval);
-                state.typingInterval = null;
-                return;
-            }
-
-            const token = queue[currentTokenIndex];
-
-            if (!currentSpan) {
-                currentSpan = document.createElement('span');
-                currentSpan.className = token.class;
-                contentDiv.appendChild(currentSpan);
-            }
-
-            // Append one char
-            const char = token.text[charIndex];
-            currentSpan.textContent += char;
-            charIndex++;
-
-            // Check if token done
-            if (charIndex >= token.text.length) {
-                currentTokenIndex++;
-                charIndex = 0;
-                currentSpan = null; // Reset for next token
-            }
-
-        }, 10); // Fast typing speed (10ms)
-    }
-
-    // --- Interaction ---
-    function handleStart(x) {
-        state.isDragging = true;
-        state.startX = x;
-        state.lastX = x;
-        state.lastTime = Date.now();
-        state.startFrame = state.currentFrame;
-
-        state.velocity = 0;         // Kill momentum
-        state.isAutoPlaying = false;// Stop base auto-play
-
-        container.style.cursor = 'grabbing';
-    }
-
-    function handleMove(x) {
-        if (!state.isDragging) return;
-
-        const now = Date.now();
-        const deltaTime = now - state.lastTime;
-        const deltaX = x - state.startX; // Total movement
-
-        // Direction: Drag Left -> Forward (Positive), Drag Right -> Backward (Negative)
-        const frameDelta = -deltaX / SENSITIVITY; // Inverted: left=+, right=-
-        updateFrameState(state.startFrame + frameDelta);
-
-        // Update direction based on movement (inverted)
-        if (deltaX !== 0) {
-            state.direction = deltaX < 0 ? 1 : -1; // Left drag = forward, Right drag = backward
-        }
-
-        // Calculate Instant Velocity
-        // v = dX / dt 
-        // We want frames per tick (16ms).
-        // deltaX per Sensitivity gives frames moved.
-        // We calculate how many frames moved in this step.
-        const stepX = x - state.lastX;
-        if (deltaTime > 0) {
-            // Rough estimate of frames per tick
-            // limit to avoid huge jumps
-            const v = (stepX / SENSITIVITY);
-            // Smooth it a bit?
-            state.velocity = v;
-        }
-
-        state.lastX = x;
-        state.lastTime = now;
-    }
-
-    function handleEnd() {
-        state.isDragging = false;
-        container.style.cursor = 'grab';
-
-        // Cap max velocity
-        const MAX_VEL = 3;
-        if (state.velocity > MAX_VEL) state.velocity = MAX_VEL;
-        if (state.velocity < -MAX_VEL) state.velocity = -MAX_VEL;
-
-        // If velocity is lower than auto play speed, just resume auto play immediately
-        if (Math.abs(state.velocity) <= AUTO_PLAY_SPEED) {
-            state.velocity = 0;
+    if (btnLeft) {
+        btnLeft.addEventListener('click', () => {
             state.isAutoPlaying = true;
-        }
-        // Otherwise inertia loop takes over
+            state.direction = 1; // Now Forward
+            state.velocity = 0; // Reset any physics velocity
+            state.mode = 'MANUAL';
+        });
     }
 
-    // --- Events ---
-    function bindEvents() {
-        // Button Interactions
-        // Swapped Logic as per request:
-        // Left Button -> Forward (Direction 1)
-        // Right Button -> Backward (Direction -1)
-
-        if (btnLeft) {
-            btnLeft.addEventListener('click', () => {
-                state.isAutoPlaying = true;
-                state.direction = 1; // Now Forward
-                state.velocity = 0; // Reset any physics velocity
-                state.mode = 'MANUAL';
-            });
-        }
-
-        if (btnRight) {
-            btnRight.addEventListener('click', () => {
-                state.isAutoPlaying = true;
-                state.direction = -1; // Now Backward
-                state.velocity = 0;
-                state.mode = 'MANUAL'; // Manual override
-            });
-        }
-
-        const btnReset = document.getElementById('btnReset');
-        if (btnReset) {
-            btnReset.addEventListener('click', () => {
-                state.isResetting = true;
-                state.mode = 'RESET';
-            });
-        }
-
-
-
-        // Canvas Interactions
-        container.addEventListener('mousedown', (e) => handleStart(e.clientX));
-        window.addEventListener('mousemove', (e) => handleMove(e.clientX));
-        window.addEventListener('mouseup', handleEnd);
-
-        container.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX), { passive: false });
-        window.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            handleMove(e.touches[0].clientX);
-        }, { passive: false });
-        window.addEventListener('touchend', handleEnd);
-
-        // UI Controls
-        const debugToggle = document.getElementById('debugToggle');
-        const debugPanel = document.getElementById('debugPanel');
-        if (debugToggle && debugPanel) {
-            debugToggle.addEventListener('click', () => {
-                debugPanel.classList.toggle('collapsed');
-            });
-        }
-
-        wordSelect.addEventListener('change', (e) => {
-            // state.word = e.target.value; 
-            // Just UI update, don't trigger load
+    if (btnRight) {
+        btnRight.addEventListener('click', () => {
+            state.isAutoPlaying = true;
+            state.direction = -1; // Now Backward
+            state.velocity = 0;
+            state.mode = 'MANUAL'; // Manual override
         });
-        styleSelect.addEventListener('change', (e) => {
-            // state.style = e.target.value;
-            // Just UI update, don't trigger load
-        });
+    }
 
-        // PostMessage Listener
-        window.addEventListener('message', (event) => {
-            const data = event.data;
-            if (data && data.cmd === 'py_btc_ai2_3_3' && data.content) {
-                handleExternalCommand(data.content);
+    const btnReset = document.getElementById('btnReset');
+    if (btnReset) {
+        btnReset.addEventListener('click', () => {
+            state.isResetting = true;
+            state.mode = 'RESET';
+        });
+    }
+
+
+
+    // Canvas Interactions
+    container.addEventListener('mousedown', (e) => handleStart(e.clientX));
+    window.addEventListener('mousemove', (e) => handleMove(e.clientX));
+    window.addEventListener('mouseup', handleEnd);
+
+    container.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX), { passive: false });
+    window.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX);
+    }, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+
+    // UI Controls
+    const debugToggle = document.getElementById('debugToggle');
+    const debugPanel = document.getElementById('debugPanel');
+    if (debugToggle && debugPanel) {
+        debugToggle.addEventListener('click', () => {
+            debugPanel.classList.toggle('collapsed');
+        });
+    }
+
+    wordSelect.addEventListener('change', (e) => {
+        // state.word = e.target.value; 
+        // Just UI update, don't trigger load
+    });
+    styleSelect.addEventListener('change', (e) => {
+        // state.style = e.target.value;
+        // Just UI update, don't trigger load
+    });
+
+    // PostMessage Listener
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (data && data.cmd === 'py_btc_ai2_3_3' && data.content) {
+            handleExternalCommand(data.content);
+        }
+    });
+
+    // Simulation Button
+    const simulateBtn = document.getElementById('simulateBtn');
+    if (simulateBtn) {
+        simulateBtn.addEventListener('click', () => {
+            const payload = {
+                cmd: 'py_btc_ai2_3_3',
+                content: {
+                    style: styleSelect.value, // Read current UI value
+                    word: wordSelect.value    // Read current UI value
+                }
+            };
+            window.postMessage(payload, '*');
+            console.log('Simulated PostMessage:', payload);
+        });
+    }
+
+    // Debug: Toggle Matrix Rain
+    const toggleMatrixBtn = document.getElementById('toggleMatrixBtn');
+    if (toggleMatrixBtn) {
+        toggleMatrixBtn.addEventListener('click', () => {
+            if (matrixCanvas.classList.contains('hidden')) {
+                matrixEffect.start();
+                console.log('Matrix FX Started via Debug');
+            } else {
+                matrixEffect.stop();
+                console.log('Matrix FX Stopped via Debug');
             }
         });
-
-        // Simulation Button
-        const simulateBtn = document.getElementById('simulateBtn');
-        if (simulateBtn) {
-            simulateBtn.addEventListener('click', () => {
-                const payload = {
-                    cmd: 'py_btc_ai2_3_3',
-                    content: {
-                        style: styleSelect.value, // Read current UI value
-                        word: wordSelect.value    // Read current UI value
-                    }
-                };
-                window.postMessage(payload, '*');
-                console.log('Simulated PostMessage:', payload);
-            });
-        }
-
-        // Debug: Toggle Matrix Rain
-        const toggleMatrixBtn = document.getElementById('toggleMatrixBtn');
-        if (toggleMatrixBtn) {
-            toggleMatrixBtn.addEventListener('click', () => {
-                if (matrixCanvas.classList.contains('hidden')) {
-                    matrixEffect.start();
-                    console.log('Matrix FX Started via Debug');
-                } else {
-                    matrixEffect.stop();
-                    console.log('Matrix FX Stopped via Debug');
-                }
-            });
-        }
-
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-        });
     }
 
-    function handleExternalCommand(content) {
-        const { style, word } = content;
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+    });
+}
 
-        // Validate if needed, or just trust/fallback
-        // Ideally checking against CONFIG would be good, but for now we trust or let it 404
+function handleExternalCommand(content) {
+    const { style, word } = content;
 
-        let needsUpdate = false;
+    // Validate if needed, or just trust/fallback
+    // Ideally checking against CONFIG would be good, but for now we trust or let it 404
 
-        if (style && style !== state.style) {
-            state.style = style;
-            if (styleSelect) styleSelect.value = style; // Sync UI
-            needsUpdate = true;
-        }
+    let needsUpdate = false;
 
-        if (word && word !== state.word) {
-            state.word = word;
-            if (wordSelect) wordSelect.value = word; // Sync UI
-            needsUpdate = true;
-        }
-
-        if (needsUpdate || state.isWaiting) {
-            state.isWaiting = false; // logic enabled
-            loadSequence(state.style, state.word);
-            console.log('External command applied:', content);
-        }
+    if (style && style !== state.style) {
+        state.style = style;
+        if (styleSelect) styleSelect.value = style; // Sync UI
+        needsUpdate = true;
     }
 
-    function getVariantForSequence(style, word) {
-        const key = `h5_seq_count_${style}_${word}`;
-        let count = parseInt(localStorage.getItem(key) || '0');
-
-        // Increment and save
-        count++;
-        localStorage.setItem(key, count);
-
-        // Cap at 3 (or however many variants we have)
-        // If count is 1 -> v1, 2 -> v2, 3 -> v3, 4 -> v3...
-        const variantNum = Math.min(count, 3);
-        state.currentVariant = `v${variantNum}`; // Store in state
-        return variantNum;
+    if (word && word !== state.word) {
+        state.word = word;
+        if (wordSelect) wordSelect.value = word; // Sync UI
+        needsUpdate = true;
     }
 
-    // Start
-    init();
+    if (needsUpdate || state.isWaiting) {
+        state.isWaiting = false; // logic enabled
+        loadSequence(state.style, state.word);
+        console.log('External command applied:', content);
+    }
+}
 
-})();
+function getVariantForSequence(style, word) {
+    const key = `h5_seq_count_${style}_${word}`;
+    let count = parseInt(localStorage.getItem(key) || '0');
+
+    // Increment and save
+    count++;
+    localStorage.setItem(key, count);
+
+    // Cap at 3 (or however many variants we have)
+    // If count is 1 -> v1, 2 -> v2, 3 -> v3, 4 -> v3...
+    const variantNum = Math.min(count, 3);
+    state.currentVariant = `v${variantNum}`; // Store in state
+    return variantNum;
+}
+
+// Start
+init();
+
+}) ();
