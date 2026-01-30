@@ -28,15 +28,23 @@
             <!-- 4:3 Stage -->
             <div class="stage">
 
+                <!-- Global Loading Overlay (Initial) -->
+                <div id="globalLoadingOverlay" class="loading-overlay global-overlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading...</div>
+                </div>
+
                 <div class="stage-bg"></div>
                 <img src="assets/exclude.png" class="overlay-mask" alt="overlay">
 
                 <!-- 3:4 Image Display Area -->
                 <div class="sequence-container" id="sequenceContainer">
-                    <!-- Loading Overlay Scoped Here -->
-                    <div id="loadingOverlay" class="loading-overlay hidden">
+                    <!-- Sequence Loading Overlay (Generating Phase) -->
+                    <div id="sequenceLoadingOverlay" class="loading-overlay sequence-scope hidden">
+                        <div class="spinner"></div>
                         <div class="loading-text">正在生成中，请稍候...</div>
                     </div>
+
                     <canvas id="matrixCanvas" class="loading-fx hidden"></canvas>
                     <canvas id="sequenceCanvas" width="300" height="400"></canvas>
                     <div class="interaction-hint">拖动即可旋转</div>

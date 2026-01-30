@@ -38,23 +38,33 @@
         }
     }
 
-    // Helper: Get prompt for style + word + version
+    // Helper: Get prompt for style + word + version (Chrome 59 compatible)
     function getPrompt(styleId, wordId, version) {
         try {
-            return CONFIG.sequences[styleId]?.[wordId]?.[version]?.prompt || '暂无描述';
+            var seq = CONFIG.sequences;
+            if (seq && seq[styleId] && seq[styleId][wordId] && seq[styleId][wordId][version]) {
+                return seq[styleId][wordId][version].prompt || '暂无描述';
+            }
+            return '暂无描述';
         } catch (e) {
             return '暂无描述';
         }
     }
 
-    // Helper: Get style name
+    // Helper: Get style name (Chrome 59 compatible)
     function getStyleName(styleId) {
-        return CONFIG.styles[styleId]?.name || styleId;
+        if (CONFIG.styles && CONFIG.styles[styleId] && CONFIG.styles[styleId].name) {
+            return CONFIG.styles[styleId].name;
+        }
+        return styleId;
     }
 
-    // Helper: Get word name
+    // Helper: Get word name (Chrome 59 compatible)
     function getWordName(wordId) {
-        return CONFIG.words[wordId]?.name || wordId;
+        if (CONFIG.words && CONFIG.words[wordId] && CONFIG.words[wordId].name) {
+            return CONFIG.words[wordId].name;
+        }
+        return wordId;
     }
 
     // --- State ---
@@ -94,7 +104,8 @@
     const wordSelect = document.getElementById('wordSelect');
     const styleSelect = document.getElementById('styleSelect');
     const currentStatus = document.getElementById('currentStatus');
-    const loadingOverlay = document.getElementById('loadingOverlay');
+    const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
+    const sequenceLoadingOverlay = document.getElementById('sequenceLoadingOverlay');
     const matrixCanvas = document.getElementById('matrixCanvas');
 
     // Matrix Rain Effect - Performance optimized with RAF
@@ -217,9 +228,11 @@
             debugPanel.style.display = 'none';
         }
 
-        // Start in "Generating..." state waiting for command
-        loadingOverlay.classList.remove('hidden');
-        matrixEffect.start();
+        // Start in "Waiting" state (Global Spinner only, no Matrix Rain)
+        if (globalLoadingOverlay) globalLoadingOverlay.classList.remove('hidden');
+        if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
+        // updateLoadingText('Loading...'); // Static text in HTML is fine
+        // matrixEffect.start(); // Do not start yet
 
         // Ensure Info Panel is empty/hidden initially
         const infoPanel = document.querySelector('.info-panel');
@@ -232,12 +245,30 @@
 
 
 
+    let loadTimeoutId = null;
+
     function loadSequence(styleId, wordId) {
         state.assetsLoaded = false;
         state.loadingStartTime = Date.now(); // Start timer
-        loadingOverlay.classList.remove('hidden'); // Show global spinner
+
+        // Hide global initial loader if still visible
+        if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
+
+        // UI update for "Generating" state (Sequence Scope)
+        if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.remove('hidden');
+        updateLoadingText('正在生成中，请稍候...'); // Helper now targets sequence overlay
+
         matrixEffect.start(); // Start Matrix Rain
+
         sequenceCanvas.classList.add('hidden'); // Hide sequence during loading
+
+        // Set 30s Timeout
+        if (loadTimeoutId) clearTimeout(loadTimeoutId);
+        loadTimeoutId = setTimeout(() => {
+            if (!state.assetsLoaded) {
+                handleLoadTimeout();
+            }
+        }, 30000);
 
         // Determine variant (v1, v2, v3) based on history - MUST be before updateTextDisplay
         const variant = getVariantForSequence(styleId, wordId);
@@ -318,7 +349,8 @@
             const remaining = Math.max(0, minDuration - elapsed);
 
             setTimeout(() => {
-                loadingOverlay.classList.add('hidden');
+                if (loadTimeoutId) clearTimeout(loadTimeoutId); // Clear timeout on success
+                if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
                 matrixEffect.stop(); // Stop Matrix Rain
                 sequenceCanvas.classList.remove('hidden'); // Reveal sequence
                 // Auto-play is already enabled by default in state
@@ -326,13 +358,31 @@
         }
     }
 
-    // Show loading error message to user
+    // Show loading error message to user (Targeting Sequence Overlay)
     function showLoadingError(message) {
-        const loadingText = loadingOverlay.querySelector('.loading-text');
+        const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
+        const loadingText = target.querySelector('.loading-text');
         if (loadingText) {
-            const originalText = loadingText.textContent;
-            loadingText.innerHTML = `${originalText}<br><span style="color: #ff6b6b; font-size: 12px;">${message}</span>`;
+            loadingText.innerHTML = `<span style="color: #ff6b6b; font-size: 14px;">${message}</span>`;
         }
+    }
+
+    function updateLoadingText(text) {
+        // Defaults to sequence overlay as that's where dynamic updates happen
+        const target = sequenceLoadingOverlay || document.querySelector('.loading-overlay');
+        const loadingText = target.querySelector('.loading-text');
+        if (loadingText) {
+            loadingText.textContent = text;
+            loadingText.style.color = '#fff'; // Reset color
+        }
+    }
+
+    function handleLoadTimeout() {
+        if (state.assetsLoaded) return; // Race condition check
+        console.error('Loading timed out (30s)');
+        updateLoadingText('生成失败 (超时)');
+        matrixEffect.stop();
+        // Keep overlay visible to show error
     }
 
     function resizeCanvas() {
@@ -417,9 +467,9 @@
             const PAUSE_DURATION = 1500; // 1.5 seconds pause
             const elapsed = Date.now() - state.pauseStartTime;
             if (elapsed >= PAUSE_DURATION) {
-                // Resume auto-play for next loop
+                // Resume auto-play for next loop - preserve current direction
                 state.isAutoPlaying = true;
-                state.direction = 1; // Always play forward
+                // Keep state.direction as is (don't reset to 1)
                 state.mode = 'AUTO';
             }
         }
@@ -552,13 +602,13 @@
         const deltaTime = now - state.lastTime;
         const deltaX = x - state.startX; // Total movement
 
-        // Direction: Drag Right -> Increase Frame (Positive)
-        const frameDelta = deltaX / SENSITIVITY;
+        // Direction: Drag Left -> Forward (Positive), Drag Right -> Backward (Negative)
+        const frameDelta = -deltaX / SENSITIVITY; // Inverted: left=+, right=-
         updateFrameState(state.startFrame + frameDelta);
 
-        // Update direction based on movement
+        // Update direction based on movement (inverted)
         if (deltaX !== 0) {
-            state.direction = deltaX > 0 ? 1 : -1;
+            state.direction = deltaX < 0 ? 1 : -1; // Left drag = forward, Right drag = backward
         }
 
         // Calculate Instant Velocity

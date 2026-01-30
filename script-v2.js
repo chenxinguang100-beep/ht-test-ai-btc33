@@ -39,23 +39,33 @@
         }
     }
 
-    // Helper: Get prompt for style + word + version
+    // Helper: Get prompt for style + word + version (Chrome 59 compatible)
     function getPrompt(styleId, wordId, version) {
         try {
-            return CONFIG.sequences[styleId]?.[wordId]?.[version]?.prompt || '暂无描述';
+            var seq = CONFIG.sequences;
+            if (seq && seq[styleId] && seq[styleId][wordId] && seq[styleId][wordId][version]) {
+                return seq[styleId][wordId][version].prompt || '暂无描述';
+            }
+            return '暂无描述';
         } catch (e) {
             return '暂无描述';
         }
     }
 
-    // Helper: Get style name
+    // Helper: Get style name (Chrome 59 compatible)
     function getStyleName(styleId) {
-        return CONFIG.styles[styleId]?.name || styleId;
+        if (CONFIG.styles && CONFIG.styles[styleId] && CONFIG.styles[styleId].name) {
+            return CONFIG.styles[styleId].name;
+        }
+        return styleId;
     }
 
-    // Helper: Get word name
+    // Helper: Get word name (Chrome 59 compatible)
     function getWordName(wordId) {
-        return CONFIG.words[wordId]?.name || wordId;
+        if (CONFIG.words && CONFIG.words[wordId] && CONFIG.words[wordId].name) {
+            return CONFIG.words[wordId].name;
+        }
+        return wordId;
     }
 
     // --- State ---
@@ -418,9 +428,9 @@
             const PAUSE_DURATION = 1500; // 1.5 seconds pause
             const elapsed = Date.now() - state.pauseStartTime;
             if (elapsed >= PAUSE_DURATION) {
-                // Resume auto-play for next loop
+                // Resume auto-play for next loop - preserve current direction
                 state.isAutoPlaying = true;
-                state.direction = 1; // Always play forward
+                // Keep state.direction as is (don't reset to 1)
                 state.mode = 'AUTO';
             }
         }
@@ -554,13 +564,13 @@
         const deltaTime = now - state.lastTime;
         const deltaX = x - state.startX; // Total movement
 
-        // Direction: Drag Right -> Increase Frame (Positive)
-        const frameDelta = deltaX / SENSITIVITY;
+        // Direction: Drag Left -> Forward (Positive), Drag Right -> Backward (Negative)
+        const frameDelta = -deltaX / SENSITIVITY; // Inverted: left=+, right=-
         updateFrameState(state.startFrame + frameDelta);
 
-        // Update direction based on movement
+        // Update direction based on movement (inverted)
         if (deltaX !== 0) {
-            state.direction = deltaX > 0 ? 1 : -1;
+            state.direction = deltaX < 0 ? 1 : -1; // Left drag = forward, Right drag = backward
         }
 
         // Calculate Instant Velocity
