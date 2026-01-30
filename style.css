@@ -352,16 +352,35 @@ canvas {
     pointer-events: none;
 }
 
+/* Controls Wrapper - Flex Container */
+.controls-wrapper {
+    position: absolute;
+    /* Match sequence-container horizontal position */
+    left: 15%;
+    width: 43.125%;
+
+    /* Position below sequence (sequence ends at ~83%) */
+    /* Let's place it at bottom with some padding */
+    bottom: 0%;
+    /* Lowered from 5% to 2% */
+
+    display: flex;
+    justify-content: space-between;
+    /* Evenly distribute at edges */
+    align-items: center;
+    z-index: 100;
+}
+
 /* Control Buttons - Icon Based */
 .control-btn {
-    position: absolute;
-    bottom: 25px;
-    /* Adjusted up slightly */
+    position: relative;
+    /* Changed from absolute to flow in flex */
+    bottom: auto;
+    /* Reset */
     padding: 0;
     background: transparent;
     border: none;
     cursor: pointer;
-    z-index: 100;
     transition: transform 0.2s ease, opacity 0.2s ease, filter 0.3s ease;
 
     /* Remove old box styling */
@@ -374,9 +393,9 @@ canvas {
     justify-content: center;
     align-items: center;
 
-    /* Strict size for hit area */
-    width: 60px;
-    height: 60px;
+    /* Increased size */
+    width: 80px;
+    height: 80px;
 }
 
 .control-btn img {
@@ -404,27 +423,32 @@ canvas {
     box-shadow: none;
 }
 
-/* Side button positions */
+/* Side button positions - Relies on Flex Order */
 .left-btn {
-    left: 8%;
-    /* Adjusted for visual balance */
-    transform: scaleX(-1);
-    /* Flip the arrow horizontally to point left */
+    /* No absolute positioning needed */
 }
 
-/* Fix: Hovering on a transformed element needs to preserve transform */
 .left-btn:hover {
-    transform: scaleX(-1) scale(1.1);
-    /* Keep flip + scale */
+    transform: scale(1.1);
 }
 
 .left-btn:active {
-    transform: scaleX(-1) scale(0.95);
+    transform: scale(0.95);
 }
 
 .right-btn {
-    right: 8%;
-    /* Symmetrical to left */
+    /* Right side by default flex order */
+    transform: scaleX(-1);
+    /* Flip right arrow */
+}
+
+/* Fix: Hovering on a transformed element needs to preserve transform */
+.right-btn:hover {
+    transform: scaleX(-1) scale(1.1);
+}
+
+.right-btn:active {
+    transform: scaleX(-1) scale(0.95);
 }
 
 /* Top-Right Info Panel -> Vertically Centered JSON Panel */
@@ -497,19 +521,17 @@ canvas {
 
 /* Reset Button */
 .reset-btn {
-    left: 50%;
-    /* Center exactly */
-    bottom: 25px;
-    transform: translateX(-50%);
-    width: 48px;
-    /* Slightly smaller */
-    height: 48px;
+    /* Center item in flex */
+    /* No absolute positioning needed */
+    width: 64px;
+    height: 64px;
 }
 
 .reset-btn:hover {
-    transform: translateX(-50%) scale(1.1);
+    transform: scale(1.1);
+    /* No translateX needed */
 }
 
 .reset-btn:active {
-    transform: translateX(-50%) scale(0.95);
+    transform: scale(0.95);
 }
