@@ -40,7 +40,8 @@ html {
 /* Debug Panel */
 .debug-panel {
     position: absolute;
-    bottom: 20px;
+    bottom: 0px;
+    /* Flush at bottom for auto-hide */
     left: 20px;
     background: rgba(0, 0, 0, 0.85);
 
@@ -52,7 +53,8 @@ html {
 
     padding: 0;
     /* Padding moved to children for collapse animation */
-    border-radius: 8px;
+    border-radius: 8px 8px 0 0;
+    /* Top rounded only */
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #eee;
     font-size: 14px;
@@ -89,7 +91,21 @@ html {
 }
 
 .debug-panel.collapsed .toggle-icon {
-    transform: rotate(-90deg);
+    transform: rotate(180deg);
+    /* Rotate up indicating expand */
+}
+
+/* Auto-hide Logic: When collapsed, slide down off-screen */
+.debug-panel.collapsed {
+    transform: translateY(calc(100% - 6px));
+    /* Leave 6px trigger zone */
+    opacity: 0.6;
+}
+
+/* Hovering the collapsed trigger zone reveals the header (Peek) */
+.debug-panel.collapsed:hover {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 .debug-content {
@@ -424,9 +440,7 @@ canvas {
 }
 
 /* Side button positions - Relies on Flex Order */
-.left-btn {
-    /* No absolute positioning needed */
-}
+
 
 .left-btn:hover {
     transform: scale(1.1);

@@ -8,6 +8,14 @@
         "Style2": {
             "name": "水晶",
             "description": "晶莹剔透的水晶材质风格"
+        },
+        "Style3": {
+            "name": "像素",
+            "description": "风格3的描述占位符"
+        },
+        "Style4": {
+            "name": "赛博朋克",
+            "description": "风格4的描述占位符"
         }
     },
     "words": {
@@ -25,6 +33,34 @@
                 "动物",
                 "自然",
                 "活力"
+            ]
+        },
+        "Word3": {
+            "name": "词语3",
+            "tags": [
+                "标签1",
+                "标签2"
+            ]
+        },
+        "Word4": {
+            "name": "词语4",
+            "tags": [
+                "标签1",
+                "标签2"
+            ]
+        },
+        "Word5": {
+            "name": "词语5",
+            "tags": [
+                "标签1",
+                "标签2"
+            ]
+        },
+        "Word6": {
+            "name": "词语6",
+            "tags": [
+                "标签1",
+                "标签2"
             ]
         }
     },
@@ -51,6 +87,50 @@
                 "v3": {
                     "prompt": "毛毡风格的柴犬在金黄麦田中奔跑，夕阳将一切染成暖色调，呈现治愈系的田园风光。"
                 }
+            },
+            "Word3": {
+                "v1": {
+                    "prompt": "Style1 Word3 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style1 Word3 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style1 Word3 V3 Placeholder"
+                }
+            },
+            "Word4": {
+                "v1": {
+                    "prompt": "Style1 Word4 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style1 Word4 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style1 Word4 V3 Placeholder"
+                }
+            },
+            "Word5": {
+                "v1": {
+                    "prompt": "Style1 Word5 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style1 Word5 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style1 Word5 V3 Placeholder"
+                }
+            },
+            "Word6": {
+                "v1": {
+                    "prompt": "Style1 Word6 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style1 Word6 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style1 Word6 V3 Placeholder"
+                }
             }
         },
         "Style2": {
@@ -74,6 +154,186 @@
                 },
                 "v3": {
                     "prompt": "夜晚的星空下，水晶柴犬的身体映射着满天繁星，如同一件精美的艺术品。"
+                }
+            },
+            "Word3": {
+                "v1": {
+                    "prompt": "Style2 Word3 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style2 Word3 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style2 Word3 V3 Placeholder"
+                }
+            },
+            "Word4": {
+                "v1": {
+                    "prompt": "Style2 Word4 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style2 Word4 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style2 Word4 V3 Placeholder"
+                }
+            },
+            "Word5": {
+                "v1": {
+                    "prompt": "Style2 Word5 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style2 Word5 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style2 Word5 V3 Placeholder"
+                }
+            },
+            "Word6": {
+                "v1": {
+                    "prompt": "Style2 Word6 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style2 Word6 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style2 Word6 V3 Placeholder"
+                }
+            }
+        },
+        "Style3": {
+            "Word1": {
+                "v1": {
+                    "prompt": "Style3 Word1 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word1 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word1 V3 Placeholder"
+                }
+            },
+            "Word2": {
+                "v1": {
+                    "prompt": "Style3 Word2 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word2 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word2 V3 Placeholder"
+                }
+            },
+            "Word3": {
+                "v1": {
+                    "prompt": "Style3 Word3 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word3 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word3 V3 Placeholder"
+                }
+            },
+            "Word4": {
+                "v1": {
+                    "prompt": "Style3 Word4 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word4 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word4 V3 Placeholder"
+                }
+            },
+            "Word5": {
+                "v1": {
+                    "prompt": "Style3 Word5 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word5 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word5 V3 Placeholder"
+                }
+            },
+            "Word6": {
+                "v1": {
+                    "prompt": "Style3 Word6 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style3 Word6 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style3 Word6 V3 Placeholder"
+                }
+            }
+        },
+        "Style4": {
+            "Word1": {
+                "v1": {
+                    "prompt": "Style4 Word1 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word1 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word1 V3 Placeholder"
+                }
+            },
+            "Word2": {
+                "v1": {
+                    "prompt": "Style4 Word2 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word2 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word2 V3 Placeholder"
+                }
+            },
+            "Word3": {
+                "v1": {
+                    "prompt": "Style4 Word3 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word3 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word3 V3 Placeholder"
+                }
+            },
+            "Word4": {
+                "v1": {
+                    "prompt": "Style4 Word4 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word4 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word4 V3 Placeholder"
+                }
+            },
+            "Word5": {
+                "v1": {
+                    "prompt": "Style4 Word5 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word5 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word5 V3 Placeholder"
+                }
+            },
+            "Word6": {
+                "v1": {
+                    "prompt": "Style4 Word6 V1 Placeholder"
+                },
+                "v2": {
+                    "prompt": "Style4 Word6 V2 Placeholder"
+                },
+                "v3": {
+                    "prompt": "Style4 Word6 V3 Placeholder"
                 }
             }
         }
