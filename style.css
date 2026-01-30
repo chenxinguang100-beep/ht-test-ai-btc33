@@ -352,61 +352,79 @@ canvas {
     pointer-events: none;
 }
 
-/* Control Buttons - With Chrome 59 fallback */
+/* Control Buttons - Icon Based */
 .control-btn {
     position: absolute;
-    bottom: 10px;
-    padding: 10px 28px;
-    /* Solid fallback for Chrome 59 (no backdrop-filter support) */
-    background: rgba(10, 30, 50, 0.9);
-    border: 2px solid #0ff;
-    border-radius: 25px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 1px;
+    bottom: 25px;
+    /* Adjusted up slightly */
+    padding: 0;
+    background: transparent;
+    border: none;
     cursor: pointer;
     z-index: 100;
-    transition: all 0.3s ease;
-    /* backdrop-filter for modern browsers - graceful degradation */
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    box-shadow:
-        0 0 15px rgba(0, 255, 255, 0.6),
-        0 0 30px rgba(0, 255, 255, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+    transition: transform 0.2s ease, opacity 0.2s ease, filter 0.3s ease;
+
+    /* Remove old box styling */
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    text-shadow: none;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Strict size for hit area */
+    width: 60px;
+    height: 60px;
 }
 
-/* Progressive enhancement: lighter bg when backdrop-filter is supported */
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-    .control-btn {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(0, 255, 255, 0.1) 100%);
-    }
+.control-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Optional: Add glow to the icon itself since we removed the box glow */
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4));
+    transition: filter 0.3s ease;
 }
 
 .control-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(0, 255, 255, 0.2) 100%);
-    border-color: #fff;
-    box-shadow:
-        0 0 25px rgba(0, 255, 255, 0.8),
-        0 0 50px rgba(0, 255, 255, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    transform: scale(1.08);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    transform: scale(1.1);
+}
+
+.control-btn:hover img {
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8));
 }
 
 .control-btn:active {
     transform: scale(0.95);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    box-shadow: none;
 }
 
 /* Side button positions */
 .left-btn {
-    left: 5%;
+    left: 8%;
+    /* Adjusted for visual balance */
+    transform: scaleX(-1);
+    /* Flip the arrow horizontally to point left */
+}
+
+/* Fix: Hovering on a transformed element needs to preserve transform */
+.left-btn:hover {
+    transform: scaleX(-1) scale(1.1);
+    /* Keep flip + scale */
+}
+
+.left-btn:active {
+    transform: scaleX(-1) scale(0.95);
 }
 
 .right-btn {
-    right: 32%;
+    right: 8%;
+    /* Symmetrical to left */
 }
 
 /* Top-Right Info Panel -> Vertically Centered JSON Panel */
@@ -477,14 +495,19 @@ canvas {
     text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
-/* Reset Button - extends control-btn style */
+/* Reset Button */
 .reset-btn {
-    left: 36.6%;
+    left: 50%;
+    /* Center exactly */
+    bottom: 25px;
     transform: translateX(-50%);
+    width: 48px;
+    /* Slightly smaller */
+    height: 48px;
 }
 
 .reset-btn:hover {
-    transform: translateX(-50%) scale(1.05);
+    transform: translateX(-50%) scale(1.1);
 }
 
 .reset-btn:active {
