@@ -782,18 +782,19 @@
     }
 
     function getVariantForSequence(style, word) {
+        // Temporarily force v1 as requested (Single variant mode)
+        return 1;
+
+        /* 
+        // Original Logic:
         const key = `h5_seq_count_${style}_${word}`;
         let count = parseInt(localStorage.getItem(key) || '0');
-
-        // Increment and save
         count++;
         localStorage.setItem(key, count);
-
-        // Cap at 3 (or however many variants we have)
-        // If count is 1 -> v1, 2 -> v2, 3 -> v3, 4 -> v3...
         const variantNum = Math.min(count, 3);
-        state.currentVariant = `v${variantNum}`; // Store in state
+        state.currentVariant = `v${variantNum}`; 
         return variantNum;
+        */
     }
 
     function populateDebugControls() {

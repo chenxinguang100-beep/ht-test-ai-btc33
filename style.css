@@ -18,7 +18,7 @@ html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #0d0d12;
+    /* background-color: #0d0d12; Removed to allow transparency if needed */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #fff;
 }
