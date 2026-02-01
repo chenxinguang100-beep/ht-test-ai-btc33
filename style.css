@@ -58,7 +58,8 @@ html {
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #eee;
     font-size: 14px;
-    z-index: 100;
+    z-index: 3000;
+    /* Elevated above overlays */
     width: 200px;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -149,8 +150,8 @@ html {
 .global-overlay {
     z-index: 2000;
     /* Highest priority within stage */
-    background: rgba(0, 0, 0, 0.7);
-    /* Darker mask for global wait */
+    /* Darker mask for global wait - Opaque Black as requested */
+    background: #000;
 }
 
 /* Sequence overlay - Scoped to container */
@@ -409,9 +410,9 @@ canvas {
     justify-content: center;
     align-items: center;
 
-    /* Increased size */
-    width: 80px;
-    height: 80px;
+    /* Increased size - using vmin for consistent scaling */
+    width: 8vmin;
+    height: 8vmin;
 }
 
 .control-btn img {
