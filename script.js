@@ -288,49 +288,28 @@
             // Base path structure without extension
             const basePath = `assets/sequences/${styleId}/${wordId}/v${variant}/${num}`;
 
-            // Try WebP first (Optimized), then fallback to PNG and JPG
-            const imgWebp = new Image();
-            const webpPath = `${basePath}.webp`;
-            const pngPath = `${basePath}.png`;
+            // Strict JPG Loading (No WebP/PNG support)
+            const imgJpg = new Image();
             const jpgPath = `${basePath}.jpg`;
             const frameIndex = i - 1; // Capture for closure
 
-            imgWebp.src = webpPath;
-            imgWebp.onload = () => {
-                state.images[frameIndex] = imgWebp;
+            imgJpg.src = jpgPath;
+            imgJpg.onload = () => {
+                state.images[frameIndex] = imgJpg;
                 loadedCount++;
                 checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
             };
-            imgWebp.onerror = () => {
-                // WebP failed, try PNG
-                const imgPng = new Image();
-                imgPng.src = pngPath;
-                imgPng.onload = () => {
-                    state.images[frameIndex] = imgPng;
-                    loadedCount++;
-                    checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
-                };
-                imgPng.onerror = () => {
-                    // PNG failed, try JPG
-                    const imgJpg = new Image();
-                    imgJpg.src = jpgPath;
-                    imgJpg.onload = () => {
-                        state.images[frameIndex] = imgJpg;
-                        loadedCount++;
-                        checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
-                    };
-                    imgJpg.onerror = () => {
-                        // All formats failed
-                        console.warn(`Frame ${i} failed to load (WebP, PNG, JPG). Using placeholder.`);
-                        failedCount++;
-                        // Use 1x1 fallback to prevent crash in draw loop
-                        fallbackImg.src = FALLBACK_IMG_SRC;
-                        state.images[frameIndex] = fallbackImg;
-                        checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
-                    };
-                };
+            imgJpg.onerror = () => {
+                console.warn(`Frame ${i} failed to load (JPG): ${jpgPath}`);
+                failedCount++;
+                // Use 1x1 fallback to prevent crash in draw loop
+                const fallbackImg = new Image();
+                fallbackImg.src = FALLBACK_IMG_SRC;
+                state.images[frameIndex] = fallbackImg;
+                loadedCount++; // Count as loaded (but failed) to trigger completion
+                checkLoadStatus(loadedCount, failedCount, TOTAL_FRAMES);
             };
-        };
+        }
     }
 
     function checkLoadStatus(current, failed, total) {
