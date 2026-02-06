@@ -100,8 +100,16 @@
                 <div class="control-group">
                     <button id="toggleMatrixBtn"
                         style="width: 100%; padding: 8px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); color: #0ff; border-radius: 4px; cursor: pointer; margin-top: 5px;">
-                        查看代码雨效果 (Toggle FX)
-                    </button>
+                        <button id="toggleMatrixBtn"
+                            style="width: 100%; padding: 8px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); color: #0ff; border-radius: 4px; cursor: pointer; margin-top: 5px;">
+                            查看代码雨效果 (Toggle FX)
+                        </button>
+                </div>
+                <!-- Custom Sequence Upload -->
+                <div class="control-group">
+                    <label for="customUpload" style="display:block; margin-bottom:5px;">上传本地序列帧 (24张):</label>
+                    <input type="file" id="customUpload" multiple accept="image/*"
+                        style="width: 100%; color: #fff; font-size: 12px;">
                 </div>
                 <div class="status-display">
                     当前: <span id="currentStatus">第 1 帧</span>

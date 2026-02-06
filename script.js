@@ -792,12 +792,88 @@
         const toggleMatrixBtn = document.getElementById('toggleMatrixBtn');
         if (toggleMatrixBtn) {
             toggleMatrixBtn.addEventListener('click', () => {
-                if (matrixCanvas.classList.contains('hidden')) {
-                    matrixEffect.start();
-                    console.log('Matrix FX Started via Debug');
-                } else {
+                if (matrixEffect.isRunning) {
                     matrixEffect.stop();
-                    console.log('Matrix FX Stopped via Debug');
+                    // If matrix stopped, ensure sequence canvas is visible
+                    if (state.assetsLoaded) canvas.classList.remove('hidden');
+                } else {
+                    canvas.classList.add('hidden');
+                    matrixEffect.start();
+                }
+            });
+        }
+
+        // Custom Sequence Upload
+        const customUpload = document.getElementById('customUpload');
+        if (customUpload) {
+            customUpload.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                if (files.length !== 24) {
+                    alert(`请选择 24 张图片 (当前已选 ${files.length} 张)`);
+                    return;
+                }
+
+                // Sort files by name (01.jpg, 02.jpg, etc.)
+                files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+                console.log('Loading custom sequence...', files.map(f => f.name));
+
+                // Reset State
+                state.images = [];
+                state.assetsLoaded = false;
+
+                // Show loading indicator
+                if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.remove('hidden');
+                updateLoadingText('正在加载本地素材...');
+                sequenceCanvas.classList.add('hidden');
+
+                let loadedCount = 0;
+                let failedCount = 0;
+
+                files.forEach((file, index) => {
+                    if (index >= TOTAL_FRAMES) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            state.images[index] = img;
+                            loadedCount++;
+                            checkCustomLoadStatus(loadedCount, failedCount);
+                        };
+                        img.onerror = () => {
+                            console.error(`Failed to load custom image: ${file.name}`);
+                            failedCount++;
+                            // Fallback
+                            const fallbackImg = new Image();
+                            fallbackImg.src = FALLBACK_IMG_SRC;
+                            state.images[index] = fallbackImg;
+                            loadedCount++;
+                            checkCustomLoadStatus(loadedCount, failedCount);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                function checkCustomLoadStatus(current, failed) {
+                    if (current >= 24) {
+                        state.assetsLoaded = true;
+                        if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
+                        sequenceCanvas.classList.remove('hidden');
+
+                        // Update Info
+                        updateTextDisplay('Custom', 'Upload');
+                        const status = document.getElementById('currentStatus');
+                        if (status) status.innerText = "Custom Sequence Loaded";
+
+                        // Auto play
+                        state.isAutoPlaying = true;
+                        state.currentFrame = 0;
+                        console.log('Custom sequence loaded successfully');
+                    }
                 }
             });
         }
