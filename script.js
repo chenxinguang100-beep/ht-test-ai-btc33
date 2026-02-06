@@ -864,14 +864,23 @@
                         if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
                         sequenceCanvas.classList.remove('hidden');
 
+                        // Stop Matrix if running
+                        if (matrixEffect.isRunning) {
+                            matrixEffect.stop();
+                        }
+
                         // Update Info
                         updateTextDisplay('Custom', 'Upload');
                         const status = document.getElementById('currentStatus');
                         if (status) status.innerText = "Custom Sequence Loaded";
 
-                        // Auto play
+                        // Reset Animation State (Force Auto Play)
                         state.isAutoPlaying = true;
                         state.currentFrame = 0;
+                        state.accumulatedFrames = 0; // Reset loop counter
+                        state.velocity = 0;          // Reset physics
+                        state.mode = 'AUTO';         // Reset mode to prevent pause state
+
                         console.log('Custom sequence loaded successfully');
                     }
                 }
