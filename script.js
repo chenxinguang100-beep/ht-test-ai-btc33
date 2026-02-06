@@ -108,6 +108,63 @@
     const sequenceLoadingOverlay = document.getElementById('sequenceLoadingOverlay');
     const matrixCanvas = document.getElementById('matrixCanvas');
 
+    // --- Audio Manager ---
+    const audioManager = {
+        sounds: {
+            click: new Audio('assets/sounds/click.mp3'),
+            matrix: new Audio('assets/sounds/matrix_loop.mp3'),
+            success: new Audio('assets/sounds/success.mp3'),
+            bgm: new Audio('assets/sounds/bgm.mp3')
+        },
+        init() {
+            // Configure sounds
+            this.sounds.matrix.loop = true;
+            this.sounds.bgm.loop = true;
+            this.sounds.bgm.volume = 0.5; // Lower volume for BGM
+
+            // Unlock audio on first interaction
+            const unlockAudio = () => {
+                // Try to play BGM
+                if (this.sounds.bgm.paused) {
+                    this.sounds.bgm.play().catch(e => console.log('Audio autoplay blocked, waiting for interaction'));
+                }
+                // Preload others
+                this.sounds.click.load();
+                this.sounds.success.load();
+
+                // Remove listeners once triggered
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            };
+
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+        },
+        play(name) {
+            const sound = this.sounds[name];
+            if (sound) {
+                if (name === 'click') {
+                    // Allow overlapping clicks
+                    const clone = sound.cloneNode();
+                    clone.volume = sound.volume;
+                    clone.play().catch(() => { });
+                } else if (name === 'matrix') {
+                    sound.play().catch(() => { });
+                } else {
+                    sound.play().catch(() => { });
+                }
+            }
+        },
+        stop(name) {
+            const sound = this.sounds[name];
+            if (sound) {
+                sound.pause();
+                sound.currentTime = 0;
+            }
+        }
+    };
+
+
     // Matrix Rain Effect - Performance optimized with RAF
     const matrixEffect = {
         canvas: null,
@@ -219,6 +276,7 @@
         await loadConfig();
 
         if (matrixCanvas) matrixEffect.init(matrixCanvas);
+        audioManager.init(); // Init Audio
         resizeCanvas();
         bindEvents();
         populateDebugControls(); // Populate debug dropdowns from Config
@@ -240,6 +298,13 @@
         if (infoPanel) infoPanel.innerHTML = '';
 
         startLoop(); // Start the game loop (rendering will just show empty/loading)
+
+        // Dispatch Ready Event for Bridge Handshake
+        console.log("H5 Ready: Dispatching 'ready' signal");
+        window.parent.postMessage({
+            source: "h5",
+            cmd: "ready"
+        }, "*");
     }
 
     // --- Asset Loading ---
@@ -260,6 +325,7 @@
         updateLoadingText('正在生成中，请稍候...'); // Helper now targets sequence overlay
 
         matrixEffect.start(); // Start Matrix Rain
+        audioManager.play('matrix'); // Start Matrix Sound
 
         sequenceCanvas.classList.add('hidden'); // Hide sequence during loading
 
@@ -286,7 +352,9 @@
         for (let i = 1; i <= TOTAL_FRAMES; i++) {
             const num = i < 10 ? `0${i}` : `${i}`;
             // Base path structure without extension
-            const basePath = `assets/sequences/${styleId}/${wordId}/v${variant}/${num}`;
+            // const basePath = `assets/sequences/${styleId}/${wordId}/v${variant}/${num}`;
+            // Updated to OSS URL as per request
+            const basePath = `https://experience-class.oss-accelerate.aliyuncs.com/btc_py_2_3_3/sequences/${styleId}/${wordId}/v${variant}/${num}`;
 
             // Strict JPG Loading (No WebP/PNG support)
             const imgJpg = new Image();
@@ -331,6 +399,8 @@
                 if (loadTimeoutId) clearTimeout(loadTimeoutId); // Clear timeout on success
                 if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
                 matrixEffect.stop(); // Stop Matrix Rain
+                audioManager.stop('matrix'); // Stop Matrix Sound
+                audioManager.play('success'); // Play Success Sound
                 sequenceCanvas.classList.remove('hidden'); // Reveal sequence
                 // Auto-play is already enabled by default in state
             }, remaining);
@@ -361,6 +431,7 @@
         console.error('Loading timed out (30s)');
         updateLoadingText('生成失败 (超时)');
         matrixEffect.stop();
+        audioManager.stop('matrix');
         // Keep overlay visible to show error
     }
 
@@ -634,6 +705,7 @@
 
         if (btnLeft) {
             btnLeft.addEventListener('click', () => {
+                audioManager.play('click');
                 state.isAutoPlaying = true;
                 state.direction = 1; // Now Forward
                 state.velocity = 0; // Reset any physics velocity
@@ -643,6 +715,7 @@
 
         if (btnRight) {
             btnRight.addEventListener('click', () => {
+                audioManager.play('click');
                 state.isAutoPlaying = true;
                 state.direction = -1; // Now Backward
                 state.velocity = 0;
@@ -653,6 +726,7 @@
         const btnReset = document.getElementById('btnReset');
         if (btnReset) {
             btnReset.addEventListener('click', () => {
+                audioManager.play('click');
                 state.isResetting = true;
                 state.mode = 'RESET';
             });

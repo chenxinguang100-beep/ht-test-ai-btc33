@@ -252,40 +252,14 @@ html {
     flex-shrink: 0;
 }
 
-.traffic-lights {
-    display: flex;
-    gap: 8px;
-}
-
-.light {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: block;
-}
-
-.light.red {
-    background-color: #ff5f56;
-    border: 0.5px solid #e0443e;
-}
-
-.light.yellow {
-    background-color: #ffbd2e;
-    border: 0.5px solid #dea123;
-}
-
-.light.green {
-    background-color: #27c93f;
-    border: 0.5px solid #1aab29;
-}
+/* Traffic lights removed */
 
 .window-title {
     flex: 1;
     text-align: center;
     font-size: 13px;
     color: #888;
-    margin-right: 52px;
-    /* Offset purely to center text visually considering lights width */
+    /* margin-right removed as traffic lights are gone */
     font-weight: 500;
 }
 
@@ -535,12 +509,7 @@ canvas {
 }
 
 /* Reset Button */
-.reset-btn {
-    /* Center item in flex */
-    /* No absolute positioning needed */
-    width: 64px;
-    height: 64px;
-}
+/* .reset-btn uses inherited styles from .control-btn */
 
 .reset-btn:hover {
     transform: scale(1.1);
