@@ -305,6 +305,19 @@
             source: "h5",
             cmd: "ready"
         }, "*");
+
+        // Check for URL parameters to trigger playback (Deep Linking)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStyle = urlParams.get('style');
+        const urlWord = urlParams.get('word');
+
+        if (urlStyle && urlWord) {
+            console.log(`URL Params found: style=${urlStyle}, word=${urlWord}`);
+            // Small delay to ensure everything is ready
+            setTimeout(() => {
+                handleExternalCommand({ style: urlStyle, word: urlWord });
+            }, 500);
+        }
     }
 
     // --- Asset Loading ---
