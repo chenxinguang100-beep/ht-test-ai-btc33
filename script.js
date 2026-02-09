@@ -124,7 +124,7 @@
 
             // Unlock audio on first interaction
             const unlockAudio = () => {
-                // Try to play BGM
+                // Try to play BGM if paused
                 if (this.sounds.bgm.paused) {
                     this.sounds.bgm.play().catch(e => console.log('Audio autoplay blocked, waiting for interaction'));
                 }
@@ -326,6 +326,9 @@
         // Let's hide the global spinner now that assets are ready.
         // If deep linking starts, it will immediately show the sequence overlay.
         if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
+
+        // Auto-play BGM immediately after loading (as requested)
+        audioManager.play('bgm');
         // updateLoadingText('Loading...'); // Static text in HTML is fine
         // matrixEffect.start(); // Do not start yet
 
