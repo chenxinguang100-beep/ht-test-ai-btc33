@@ -163,6 +163,7 @@ html {
 
 /* Spinner styling */
 .spinner {
+    display: none !important;
     width: 40px;
     height: 40px;
     border: 3px solid rgba(255, 255, 255, 0.1);

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "antigravity",
+			"path": "../../antigravity"
+		},
+		{
+			"name": "h5-demo",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

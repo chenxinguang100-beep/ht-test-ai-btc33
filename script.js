@@ -290,6 +290,42 @@
         // Start in "Waiting" state (Global Spinner only, no Matrix Rain)
         if (globalLoadingOverlay) globalLoadingOverlay.classList.remove('hidden');
         if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
+
+        // --- Preload Basic UI Assets ---
+        const uiAssets = [
+            'assets/starry_bg.png',
+            'assets/exclude.png',
+            'assets/icon_arrow.png',
+            'assets/icon_reset.png'
+        ];
+
+        try {
+            await Promise.all(uiAssets.map(src => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = resolve;
+                    img.onerror = () => {
+                        console.warn('Failed to preload UI asset:', src);
+                        resolve(); // Continue anyway
+                    };
+                });
+            }));
+            console.log('UI Assets preloaded');
+        } catch (e) {
+            console.error('Preload error:', e);
+        }
+
+        // Hide Global Overlay only after UI assets are ready
+        // But keep it if we are waiting for URL params logic to take over?
+        // Actually, the request says "until basic素材都加载完全了才会展示界面". 
+        // So we can hide global overlay here IF we are in a mode that doesn't immediately wait for "Generating".
+        // However, if we have URL params, we transition to "Generating" (SequenceScope). 
+        // If we don't, we show the idle stage.
+
+        // Let's hide the global spinner now that assets are ready.
+        // If deep linking starts, it will immediately show the sequence overlay.
+        if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
         // updateLoadingText('Loading...'); // Static text in HTML is fine
         // matrixEffect.start(); // Do not start yet
 
@@ -403,9 +439,9 @@
                 showLoadingError(`部分图片加载失败 (${failed}/${total})`);
             }
 
-            // Enforce minimum 3 seconds loading time
+            // Enforce minimum 5 seconds loading time (Requested optimization)
             const elapsed = Date.now() - state.loadingStartTime;
-            const minDuration = 3000;
+            const minDuration = 5000;
             const remaining = Math.max(0, minDuration - elapsed);
 
             setTimeout(() => {
