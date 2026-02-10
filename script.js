@@ -10,8 +10,8 @@
     const FRICTION = 0.9;         // Inertia decay
     const SENSITIVITY = 10;       // Drag sensitivity
 
-    // Debug Mode - Enable via URL param ?debug=true
-    const DEBUG_MODE = new URLSearchParams(window.location.search).get('debug') === 'true';
+    // Debug Mode - Only activates if mock.js is loaded AND ?debug=true
+    const DEBUG_MODE = !!(window.__H5_MOCK__) && new URLSearchParams(window.location.search).get('debug') === 'true';
 
     // Fallback placeholder for failed images (1x1 transparent pixel as data URL)
     const FALLBACK_IMG_SRC = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"%3E%3Crect fill="%231a1a24" width="300" height="400"/%3E%3Ctext x="150" y="200" text-anchor="middle" fill="%23666" font-size="14"%3E%E5%9B%BE%E7%89%87%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';
@@ -101,9 +101,6 @@
     const canvas = document.getElementById('sequenceCanvas');
     const ctx = canvas.getContext('2d');
     const container = document.getElementById('sequenceContainer');
-    const wordSelect = document.getElementById('wordSelect');
-    const styleSelect = document.getElementById('styleSelect');
-    const currentStatus = document.getElementById('currentStatus');
     const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
     const sequenceLoadingOverlay = document.getElementById('sequenceLoadingOverlay');
     const matrixCanvas = document.getElementById('matrixCanvas');
@@ -282,12 +279,23 @@
         audioManager.init(); // Init Audio
         resizeCanvas();
         bindEvents();
-        populateDebugControls(); // Populate debug dropdowns from Config
 
-        // Hide debug panel by default unless ?debug=true
-        const debugPanel = document.getElementById('debugPanel');
-        if (debugPanel && !DEBUG_MODE) {
-            debugPanel.style.display = 'none';
+        // --- Mock/Debug Integration ---
+        // If mock.js is loaded and ?debug=true, initialize the debug module
+        if (DEBUG_MODE && window.__H5_MOCK__ && window.__H5_MOCK__.init) {
+            window.__H5_MOCK__.init({
+                CONFIG: CONFIG,
+                state: state,
+                matrixEffect: matrixEffect,
+                canvas: canvas,
+                sequenceCanvas: document.getElementById('sequenceCanvas'),
+                sequenceLoadingOverlay: sequenceLoadingOverlay,
+                loadSequence: loadSequence,
+                updateLoadingText: updateLoadingText,
+                updateTextDisplay: updateTextDisplay,
+                TOTAL_FRAMES: TOTAL_FRAMES,
+                FALLBACK_IMG_SRC: FALLBACK_IMG_SRC
+            });
         }
 
         // Start in "Waiting" state (Global Spinner only, no Matrix Rain)
@@ -625,8 +633,11 @@
         // Update UI logic
         // Only update text on whole frame change to reduce DOM thrashing? 
         // Or just every frame (simple).
+        var currentStatus = document.getElementById('currentStatus');
         if (currentStatus) {
-            currentStatus.textContent = `${CONFIG.words[state.word] || state.word} - ${CONFIG.styles[state.style] || state.style} [第 ${frameIndex + 1} 帧]`;
+            var wordName = (CONFIG.words[state.word] && CONFIG.words[state.word].name) || state.word;
+            var styleName = (CONFIG.styles[state.style] && CONFIG.styles[state.style].name) || state.style;
+            currentStatus.textContent = wordName + ' - ' + styleName + ' [第 ' + (frameIndex + 1) + ' 帧]';
         }
         // Legacy wordLabel update removed
     }
@@ -848,24 +859,6 @@
         }, passiveFalse);
         window.addEventListener('touchend', handleEnd);
 
-        // UI Controls
-        const debugToggle = document.getElementById('debugToggle');
-        const debugPanel = document.getElementById('debugPanel');
-        if (debugToggle && debugPanel) {
-            debugToggle.addEventListener('click', () => {
-                debugPanel.classList.toggle('collapsed');
-            });
-        }
-
-        wordSelect.addEventListener('change', (e) => {
-            // state.word = e.target.value; 
-            // Just UI update, don't trigger load
-        });
-        styleSelect.addEventListener('change', (e) => {
-            // state.style = e.target.value;
-            // Just UI update, don't trigger load
-        });
-
         // PostMessage Listener
         window.addEventListener('message', (event) => {
             const data = event.data;
@@ -873,121 +866,6 @@
                 handleExternalCommand(data.content);
             }
         });
-
-        // Simulation Button
-        const simulateBtn = document.getElementById('simulateBtn');
-        if (simulateBtn) {
-            simulateBtn.addEventListener('click', () => {
-                const payload = {
-                    cmd: 'py_btc_ai2_3_3',
-                    content: {
-                        style: styleSelect.value, // Read current UI value
-                        word: wordSelect.value    // Read current UI value
-                    }
-                };
-                window.postMessage(payload, '*');
-                console.log('Simulated PostMessage:', payload);
-            });
-        }
-
-        // Debug: Toggle Matrix Rain
-        const toggleMatrixBtn = document.getElementById('toggleMatrixBtn');
-        if (toggleMatrixBtn) {
-            toggleMatrixBtn.addEventListener('click', () => {
-                if (matrixEffect.isRunning) {
-                    matrixEffect.stop();
-                    // If matrix stopped, ensure sequence canvas is visible
-                    if (state.assetsLoaded) canvas.classList.remove('hidden');
-                } else {
-                    canvas.classList.add('hidden');
-                    matrixEffect.start();
-                }
-            });
-        }
-
-        // Custom Sequence Upload
-        const customUpload = document.getElementById('customUpload');
-        if (customUpload) {
-            customUpload.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-
-                if (files.length !== 24) {
-                    alert(`请选择 24 张图片 (当前已选 ${files.length} 张)`);
-                    return;
-                }
-
-                // Sort files by name (01.jpg, 02.jpg, etc.)
-                files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-                console.log('Loading custom sequence...', files.map(f => f.name));
-
-                // Reset State
-                state.images = [];
-                state.assetsLoaded = false;
-
-                // Show loading indicator
-                if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.remove('hidden');
-                updateLoadingText('正在加载本地素材...');
-                sequenceCanvas.classList.add('hidden');
-
-                let loadedCount = 0;
-                let failedCount = 0;
-
-                files.forEach((file, index) => {
-                    if (index >= TOTAL_FRAMES) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            state.images[index] = img;
-                            loadedCount++;
-                            checkCustomLoadStatus(loadedCount, failedCount);
-                        };
-                        img.onerror = () => {
-                            console.error(`Failed to load custom image: ${file.name}`);
-                            failedCount++;
-                            // Fallback
-                            const fallbackImg = new Image();
-                            fallbackImg.src = FALLBACK_IMG_SRC;
-                            state.images[index] = fallbackImg;
-                            loadedCount++;
-                            checkCustomLoadStatus(loadedCount, failedCount);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
-
-                function checkCustomLoadStatus(current, failed) {
-                    if (current >= 24) {
-                        state.assetsLoaded = true;
-                        if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.add('hidden');
-                        sequenceCanvas.classList.remove('hidden');
-
-                        // Stop Matrix if running
-                        if (matrixEffect.isRunning) {
-                            matrixEffect.stop();
-                        }
-
-                        // Update Info
-                        updateTextDisplay('Custom', 'Upload');
-                        const status = document.getElementById('currentStatus');
-                        if (status) status.innerText = "Custom Sequence Loaded";
-
-                        // Reset Animation State (Force Auto Play)
-                        state.isAutoPlaying = true;
-                        state.currentFrame = 0;
-                        state.accumulatedFrames = 0; // Reset loop counter
-                        state.velocity = 0;          // Reset physics
-                        state.mode = 'AUTO';         // Reset mode to prevent pause state
-
-                        console.log('Custom sequence loaded successfully');
-                    }
-                }
-            });
-        }
 
         window.addEventListener('resize', () => {
             resizeCanvas();
@@ -1037,32 +915,7 @@
         */
     }
 
-    function populateDebugControls() {
-        if (!CONFIG || !CONFIG.styles || !CONFIG.words) return;
 
-        const styleSelect = document.getElementById('styleSelect');
-        const wordSelect = document.getElementById('wordSelect');
-
-        if (styleSelect) {
-            styleSelect.innerHTML = '';
-            for (const [key, val] of Object.entries(CONFIG.styles)) {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = val.name; // e.g. "毛毡"
-                styleSelect.appendChild(opt);
-            }
-        }
-
-        if (wordSelect) {
-            wordSelect.innerHTML = '';
-            for (const [key, val] of Object.entries(CONFIG.words)) {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = val.name; // e.g. "奇妙的冰雪女孩"
-                wordSelect.appendChild(opt);
-            }
-        }
-    }
 
 
     // --- Message Protocol Implementation ---

@@ -114,53 +114,10 @@
             </div>
         </div>
 
-        <!-- Debug Panel (Bottom Left) -->
-        <div class="debug-panel" id="debugPanel">
-            <div class="debug-header" id="debugToggle">
-                <h3>Mock 调试</h3>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="debug-content">
-                <div class="control-group">
-                    <label for="wordSelect">词语:</label>
-                    <select id="wordSelect">
-                        <option value="Word1">奇妙的冰雪女孩</option>
-                        <option value="Word2">柴犬一生爱自由</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="styleSelect">风格:</label>
-                    <select id="styleSelect">
-                        <option value="Style1">毛毡</option>
-                        <option value="Style2">水晶</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <button id="simulateBtn"
-                        style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; cursor: pointer;">
-                        模拟接收指令 (Simulate)
-                    </button>
-                </div>
-                <!-- New Debug Button for Matrix Rain -->
-                <div class="control-group">
-                    <button id="toggleMatrixBtn"
-                        style="width: 100%; padding: 6px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); color: #0ff; border-radius: 4px; cursor: pointer; margin-top: 5px;">
-                        查看代码雨效果
-                    </button>
-                </div>
-                <!-- Custom Sequence Upload -->
-                <div class="control-group">
-                    <label for="customUpload" style="display:block; margin-bottom:5px;">上传本地序列帧 (24张):</label>
-                    <input type="file" id="customUpload" multiple accept="image/*"
-                        style="width: 100%; color: #fff; font-size: 12px;">
-                </div>
-                <div class="status-display">
-                    当前: <span id="currentStatus">第 1 帧</span>
-                </div>
-            </div>
-        </div>
     </div>
 
+    <!-- Mock/Debug Module: 部署上线时删除下面这行 -->
+    <script src="mock.js"></script>
     <script src="script.js"></script>
 </body>
 
