@@ -862,7 +862,17 @@
         // PostMessage Listener
         window.addEventListener('message', (event) => {
             const data = event.data;
-            if (data && data.cmd === 'py_btc_ai2_3_3' && data.content) {
+            if (!data || !data.cmd) return;
+
+            // WebView 关闭事件：回传 result（不过关）让 Python 跳出循环
+            if (data.cmd === 'onClickClose') {
+                console.log('Received onClickClose from WebView');
+                sendResult({ success: false, closed: true });
+                return;
+            }
+
+            // 正常业务指令
+            if (data.cmd === 'py_btc_ai2_3_3' && data.content) {
                 handleExternalCommand(data.content);
             }
         });
