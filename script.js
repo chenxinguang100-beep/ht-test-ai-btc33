@@ -107,6 +107,9 @@
     const globalLoadingOverlay = document.getElementById('globalLoadingOverlay');
     const sequenceLoadingOverlay = document.getElementById('sequenceLoadingOverlay');
     const matrixCanvas = document.getElementById('matrixCanvas');
+    const interactionHint = document.getElementById('interactionHint');
+    const hintIcon = document.getElementById('hintIcon');
+    const hintText = document.getElementById('hintText');
 
     // --- Audio Manager ---
     const audioManager = {
@@ -350,6 +353,17 @@
         const urlStyle = urlParams.get('style');
         const urlWord = urlParams.get('word');
 
+        // --- Smart Interaction Hint ---
+        // Detect device type and set appropriate hint text + icon
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isTouchDevice) {
+            document.body.classList.add('is-pc');
+        }
+        if (hintText) {
+            hintText.textContent = isTouchDevice ? '左右滑动旋转' : '按住拖动旋转';
+        }
+        // Hint is initially hidden via CSS, will be activated when sequence loads
+
         if (urlStyle && urlWord) {
             console.log(`URL Params found: style=${urlStyle}, word=${urlWord}`);
             // Small delay to ensure everything is ready
@@ -454,6 +468,11 @@
                 audioManager.stop('matrix'); // Stop Matrix Sound
                 audioManager.play('success'); // Play Success Sound
                 sequenceCanvas.classList.remove('hidden'); // Reveal sequence
+
+                // Show interaction hint after sequence is revealed
+                if (interactionHint) {
+                    interactionHint.classList.add('active');
+                }
                 // Auto-play is already enabled by default in state
             }, remaining);
         }
@@ -694,6 +713,12 @@
         state.velocity = 0;         // Kill momentum
         state.isAutoPlaying = false;// Stop base auto-play
 
+        // Hide interaction hint on first drag
+        if (interactionHint && interactionHint.classList.contains('active')) {
+            interactionHint.classList.remove('active');
+            interactionHint.classList.add('hidden');
+        }
+
         container.style.cursor = 'grabbing';
     }
 
@@ -749,6 +774,17 @@
     }
 
     // --- Events ---
+    // Feature-detect passive event listener support (Chrome 51+, older WebViews may not support)
+    var supportsPassive = false;
+    try {
+        var opts = Object.defineProperty({}, 'passive', {
+            get: function () { supportsPassive = true; }
+        });
+        window.addEventListener('testPassive', null, opts);
+        window.removeEventListener('testPassive', null, opts);
+    } catch (e) { }
+    var passiveFalse = supportsPassive ? { passive: false } : false;
+
     function bindEvents() {
         // Button Interactions
         // Swapped Logic as per request:
@@ -784,6 +820,20 @@
             });
         }
 
+        const btnFinish = document.getElementById('btnFinish');
+        if (btnFinish) {
+            btnFinish.addEventListener('click', function () {
+                audioManager.play('success'); // Play positive sound
+                console.log('User clicked Finish');
+                // Send success result (no alert)
+                sendResult({
+                    success: true,
+                    finished: true,
+                    timestamp: Date.now()
+                });
+            });
+        }
+
 
 
         // Canvas Interactions
@@ -791,11 +841,11 @@
         window.addEventListener('mousemove', (e) => handleMove(e.clientX));
         window.addEventListener('mouseup', handleEnd);
 
-        container.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX), { passive: false });
-        window.addEventListener('touchmove', (e) => {
+        container.addEventListener('touchstart', function (e) { handleStart(e.touches[0].clientX); }, passiveFalse);
+        window.addEventListener('touchmove', function (e) {
             e.preventDefault();
             handleMove(e.touches[0].clientX);
-        }, { passive: false });
+        }, passiveFalse);
         window.addEventListener('touchend', handleEnd);
 
         // UI Controls
@@ -1013,6 +1063,43 @@
             }
         }
     }
+
+
+    // --- Message Protocol Implementation ---
+
+    // Send completion signal to Python backend
+    // Validates the protocol: { cmd: 'result', content: { ... } }
+    function sendResult(customContent) {
+        customContent = customContent || {};
+        var content = {
+            // Default content fields expected by check scripts
+            style: state.style,
+            word: state.word,
+            timestamp: Date.now()
+        };
+        // Chrome 59 compatible: use Object.assign instead of spread operator
+        Object.assign(content, customContent);
+        var payload = {
+            cmd: 'result',
+            content: content
+        };
+
+        console.log('Sending Result to Parent:', payload);
+
+        if (window.parent) {
+            window.parent.postMessage(payload, '*');
+        } else {
+            console.warn('No window.parent found to send result');
+        }
+    }
+
+    // Expose for external testing if needed
+    window.h5Sender = {
+        sendResult: sendResult
+    };
+
+    // --- Events ---
+    // ... (bindEvents is above)
 
     // Start
     init();

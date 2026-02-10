@@ -44,13 +44,6 @@ html {
     /* Flush at bottom for auto-hide */
     left: 20px;
     background: rgba(0, 0, 0, 0.85);
-
-    @supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
-        background: rgba(0, 0, 0, 0.6);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-    }
-
     padding: 0;
     /* Padding moved to children for collapse animation */
     border-radius: 8px 8px 0 0;
@@ -207,6 +200,8 @@ html {
     /* Flex column to stack Header + Stage */
     display: flex;
     flex-direction: column;
+    /* Ensure finish button (positioned below) is not clipped */
+    overflow: visible;
 }
 
 /* 4:3 Stage Area */
@@ -287,6 +282,9 @@ html {
     z-index: 10;
     cursor: -webkit-grab;
     cursor: grab;
+    /* Prevent default touch gestures (scroll/zoom) on iPad/Android tablets */
+    -ms-touch-action: none;
+    touch-action: none;
 }
 
 .sequence-container:active {
@@ -334,14 +332,154 @@ canvas {
     object-fit: cover;
 }
 
-.interaction-hint {
+/* ===== Drag Gesture Guide Overlay ===== */
+/* Covers the sequence area with a semi-transparent overlay + animated hand */
+.drag-guide-overlay {
     position: absolute;
-    bottom: -25px;
-    width: 100%;
-    text-align: center;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+    /* Match sequence-container position exactly */
+    top: 6%;
+    left: 15%;
+    width: 43.125%;
+    height: 76.66%;
+    /* BELOW overlay-mask(15), ABOVE sequence(10) */
+    z-index: 14;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Semi-transparent backdrop */
+    background: rgba(0, 0, 0, 0.45);
     pointer-events: none;
+    /* Initially hidden */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease;
+}
+
+.drag-guide-overlay.active {
+    visibility: visible;
+    animation: guideFadeInOut 5s ease forwards;
+}
+
+.drag-guide-overlay.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    animation: none !important;
+}
+
+.drag-guide-content {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    /* gap: 2vmin — NOT used, Chrome 59 / old Safari don't support flexbox gap */
+}
+
+/* Track area - the horizontal path the hand slides along */
+.drag-track {
+    position: relative;
+    width: 24vmin;
+    height: 8vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Dashed track line */
+.drag-track-line {
+    position: absolute;
+    top: 50%;
+    left: 8%;
+    right: 8%;
+    height: 1px;
+    background: repeating-linear-gradient(to right,
+            rgba(255, 255, 255, 0.4) 0px,
+            rgba(255, 255, 255, 0.4) 6px,
+            transparent 6px,
+            transparent 12px);
+    transform: translateY(-50%);
+}
+
+/* The animated hand/cursor icon */
+.drag-hand {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+    animation: handSlide 2s ease-in-out infinite;
+}
+
+/* Bigger icon size */
+.drag-hand svg {
+    width: 8vmin;
+    height: 8vmin;
+}
+
+/* Icon switching: default show touch, hide mouse */
+.drag-hand .icon-touch {
+    display: block;
+}
+
+.drag-hand .icon-mouse {
+    display: none;
+}
+
+/* When body has .is-pc class, swap icons */
+body.is-pc .drag-hand .icon-touch {
+    display: none;
+}
+
+body.is-pc .drag-hand .icon-mouse {
+    display: block;
+}
+
+/* Guide text below the hand */
+.drag-guide-text {
+    font-size: 1.8vmin;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    white-space: nowrap;
+    letter-spacing: 0.1vmin;
+    /* Replaces gap: 2vmin on parent — compatible with Chrome 59 */
+    margin-top: 2vmin;
+}
+
+/* Hand sliding left-right animation */
+@keyframes handSlide {
+
+    0%,
+    100% {
+        transform: translateX(-7vmin);
+    }
+
+    50% {
+        transform: translateX(7vmin);
+    }
+}
+
+/* Overall fade in → stay → fade out */
+@keyframes guideFadeInOut {
+    0% {
+        opacity: 0;
+    }
+
+    8% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
 }
 
 /* Controls Wrapper - Flex Container */
@@ -534,4 +672,115 @@ canvas {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+}
+
+/* Chrome 59 Compatible: @supports at top level */
+@supports (backdrop-filter: blur(10px)) {
+    .debug-panel {
+        background: rgba(0, 0, 0, 0.6);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+}
+
+/* Finish Button - 完成关卡按钮 */
+.finish-btn-wrapper {
+    position: absolute;
+    top: calc(100% + 2vmin);
+    /* Fixed percentage distance below the stage (window-frame) */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    white-space: nowrap;
+}
+
+.finish-btn {
+    display: inline-block;
+    padding: 1.5vmin 5vmin;
+    font-size: 2.2vmin;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #00c8e8 0%, #00a0c6 100%);
+    border: none;
+    border-radius: 4vmin;
+    cursor: pointer;
+    box-shadow: 0 0 2vmin rgba(0, 200, 232, 0.5),
+        0 0.5vmin 2vmin rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-shadow: 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.2vmin;
+}
+
+.finish-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 200, 232, 0.7),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.finish-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 15px rgba(0, 200, 232, 0.4),
+        0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Small Screen & Tablet Compatibility ===== */
+/* Ensure minimum readable font sizes and touch target sizes on small screens */
+/* Using @media instead of max()/clamp() for Chrome 59 compatibility */
+
+@media (max-width: 480px),
+(max-height: 480px) {
+
+    /* Ensure finish button is tappable (min 44px touch target) */
+    .finish-btn {
+        font-size: 14px;
+        padding: 10px 28px;
+        border-radius: 22px;
+    }
+
+    /* Ensure guide text is readable */
+    .drag-guide-text {
+        font-size: 10px;
+    }
+
+    /* Ensure info panel text is readable */
+    .panel-title {
+        font-size: 11px;
+    }
+
+    .panel-content {
+        font-size: 10px;
+    }
+
+    /* Window title minimum */
+    .window-title {
+        font-size: 11px;
+    }
+
+    /* Ensure control buttons have minimum touch area */
+    .control-btn {
+        min-width: 36px;
+        min-height: 36px;
+    }
+}
+
+/* iPad / Android Tablet touch optimizations */
+@media (pointer: coarse) {
+
+    /* Larger touch targets on touch devices */
+    .control-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .finish-btn {
+        min-height: 44px;
+    }
+
+    /* Prevent text selection issues on touch devices */
+    .stage,
+    .sequence-container,
+    .controls-wrapper {
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+    }
 }

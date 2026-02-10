@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>H5 Sequence Player</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -43,7 +44,45 @@
 
                     <canvas id="matrixCanvas" class="loading-fx hidden"></canvas>
                     <canvas id="sequenceCanvas" width="300" height="400"></canvas>
-                    <div class="interaction-hint">拖动即可旋转</div>
+                </div>
+
+                <!-- Drag Gesture Guide Overlay -->
+                <div class="drag-guide-overlay" id="interactionHint">
+                    <div class="drag-guide-content">
+                        <div class="drag-track">
+                            <div class="drag-track-line"></div>
+                            <div class="drag-hand" id="hintIcon">
+                                <!-- Touch: Finger/Hand icon -->
+                                <svg class="icon-touch" viewBox="0 0 40 40" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M28 14V20L30.1 27.2C30.6 28.7 29.5 30.3 27.9 30.5L21.6 31.4C20.6 31.6 19.5 31.2 18.8 30.5L13 24L14.5 22.5C14.9 22.1 15.4 21.9 16 21.9L18.5 22.1V8.5C18.5 7.4 19.4 6.5 20.5 6.5C21.6 6.5 22.5 7.4 22.5 8.5V14H24.5C24.5 12.9 25.4 12 26.5 12C27.6 12 28.5 12.9 28.5 14H28Z"
+                                        fill="white" opacity="0.95" />
+                                    <path
+                                        d="M28 14V20L30.1 27.2C30.6 28.7 29.5 30.3 27.9 30.5L21.6 31.4C20.6 31.6 19.5 31.2 18.8 30.5L13 24L14.5 22.5C14.9 22.1 15.4 21.9 16 21.9L18.5 22.1V8.5C18.5 7.4 19.4 6.5 20.5 6.5C21.6 6.5 22.5 7.4 22.5 8.5V14H24.5C24.5 12.9 25.4 12 26.5 12C27.6 12 28.5 12.9 28.5 14H28Z"
+                                        stroke="rgba(0,255,255,0.5)" stroke-width="0.8" />
+                                </svg>
+                                <!-- PC: Mouse cursor (pressed state) -->
+                                <svg class="icon-mouse" viewBox="0 0 40 40" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Arrow cursor -->
+                                    <path d="M10 6L10 28L16 22L21 33L25 31L20 20.5L27 20.5L10 6Z" fill="white"
+                                        opacity="0.95" />
+                                    <path d="M10 6L10 28L16 22L21 33L25 31L20 20.5L27 20.5L10 6Z"
+                                        stroke="rgba(0,255,255,0.5)" stroke-width="0.8" />
+                                    <!-- Click ripple indicator -->
+                                    <circle cx="12" cy="10" r="3" fill="none" stroke="rgba(0,255,255,0.7)"
+                                        stroke-width="1">
+                                        <animate attributeName="r" from="2" to="6" dur="1.2s"
+                                            repeatCount="indefinite" />
+                                        <animate attributeName="opacity" from="0.8" to="0" dur="1.2s"
+                                            repeatCount="indefinite" />
+                                    </circle>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="drag-guide-text" id="hintText">左右拖动旋转</div>
+                    </div>
                 </div>
 
 
@@ -59,6 +98,7 @@
                     <button id="btnRight" class="control-btn right-btn" aria-label="Next">
                         <img src="assets/icon_arrow.png" alt="Right">
                     </button>
+                    <!-- Finish Button -->
                 </div>
 
                 <!-- Top-Right Info Panel -->
@@ -66,6 +106,11 @@
                     <div class="info-line">风格：<span id="styleLabel">--</span></div>
                     <div class="info-line">描述：<span id="wordLabel">--</span></div>
                 </div>
+            </div>
+
+            <!-- Finish Button - 完成关卡 -->
+            <div class="finish-btn-wrapper">
+                <button id="btnFinish" class="finish-btn">完成关卡</button>
             </div>
         </div>
 
@@ -115,6 +160,7 @@
             </div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 
