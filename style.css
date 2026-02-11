@@ -765,12 +765,12 @@ body.is-pc .drag-hand .icon-mouse {
 @media (max-width: 480px),
 (max-height: 480px) {
 
-    /* Ensure finish button is tappable (min 44px touch target) */
+    /* Ensure finish/retry buttons are tappable but scaled smoothly */
     .finish-btn,
     .retry-btn {
-        font-size: 14px;
-        padding: 10px 28px;
-        border-radius: 22px;
+        font-size: 12px;
+        padding: 8px 24px;
+        border-radius: 20px;
     }
 
     /* Ensure guide text is readable */
