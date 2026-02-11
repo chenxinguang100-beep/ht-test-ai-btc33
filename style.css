@@ -125,6 +125,10 @@ html {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    /* Radius handled by parent .stage overflow: hidden */
+    /* border-radius: 4vmin; REMOVED */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -132,12 +136,12 @@ html {
     z-index: 20;
     pointer-events: none;
     /* Let clicks pass initially, but buttons need pointer-events: auto */
+    box-sizing: border-box;
+    /* overflow: hidden; REMOVED - not needed if parent clips */
 }
 
 /* Specific for Start Overlay - needs to block interaction */
 .start-overlay {
-    width: 100%;
-    height: 100%;
     background: rgba(0, 0, 0, 0.7);
     /* Darken background */
     pointer-events: auto;
@@ -201,7 +205,9 @@ html {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    border-radius: 2vmin;
+    border-radius: 4vmin;
+    /* Match window-frame radius */
+    overflow: hidden;
 }
 
 /* Spinner styling */
@@ -252,6 +258,9 @@ html {
     flex-direction: column;
     /* Ensure finish button (positioned below) is not clipped */
     overflow: visible;
+
+    /* Layer promotion to help with rendering artifacts */
+    transform: translateZ(0);
 }
 
 /* 4:3 Stage Area */
@@ -265,6 +274,10 @@ html {
     border-radius: 0 0 12px 12px;
     overflow: hidden;
     /* Clip content within rounded bottom */
+
+    /* Fix for border-radius glitch on hover/transform of siblings/children */
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 /* Background Image */
@@ -279,6 +292,28 @@ html {
     background-size: cover;
     background-position: center;
     z-index: 1;
+}
+
+.btn-reset {
+    position: absolute;
+    top: 2vmin;
+    right: 2vmin;
+    width: 5vmin;
+    height: 5vmin;
+    background: url('assets/icon_reset.png') no-repeat center center;
+    background-size: contain;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 16;
+}
+
+/* Hide reset initially too */
+.btn-reset.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* macOS Window Header */
@@ -532,103 +567,6 @@ body.is-pc .drag-hand .icon-mouse {
     }
 }
 
-/* Controls Wrapper - Flex Container */
-.controls-wrapper {
-    position: absolute;
-    /* Match sequence-container horizontal position */
-    left: 15%;
-    width: 43.125%;
-
-    /* Position below sequence (sequence ends at ~83%) */
-    /* Let's place it at bottom with some padding */
-    bottom: 0%;
-    /* Lowered from 5% to 2% */
-
-    display: flex;
-    justify-content: space-between;
-    /* Evenly distribute at edges */
-    align-items: center;
-    z-index: 100;
-}
-
-/* Control Buttons - Icon Based */
-.control-btn {
-    position: relative;
-    /* Changed from absolute to flow in flex */
-    bottom: auto;
-    /* Reset */
-    padding: 0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, filter 0.3s ease;
-
-    /* Remove old box styling */
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    text-shadow: none;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    /* Increased size - using vmin for consistent scaling */
-    width: 8vmin;
-    height: 8vmin;
-}
-
-.control-btn img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    /* Optional: Add glow to the icon itself since we removed the box glow */
-    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4));
-    transition: filter 0.3s ease;
-}
-
-.control-btn:hover {
-    background: transparent;
-    box-shadow: none;
-    border: none;
-    transform: scale(1.1);
-}
-
-.control-btn:hover img {
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8));
-}
-
-.control-btn:active {
-    transform: scale(0.95);
-    box-shadow: none;
-}
-
-/* Side button positions - Relies on Flex Order */
-
-
-.left-btn:hover {
-    transform: scale(1.1);
-}
-
-.left-btn:active {
-    transform: scale(0.95);
-}
-
-.right-btn {
-    /* Right side by default flex order */
-    transform: scaleX(-1);
-    /* Flip right arrow */
-}
-
-/* Fix: Hovering on a transformed element needs to preserve transform */
-.right-btn:hover {
-    transform: scaleX(-1) scale(1.1);
-}
-
-.right-btn:active {
-    transform: scaleX(-1) scale(0.95);
-}
-
 /* Top-Right Info Panel -> Vertically Centered JSON Panel */
 .info-panel {
     position: absolute;
@@ -745,6 +683,53 @@ body.is-pc .drag-hand .icon-mouse {
     gap: 2vmin;
     /* Spacing between buttons */
     pointer-events: auto;
+}
+
+/* Controls (Arrows & Reset) */
+.controls-container {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 15;
+    /* Initially hidden via class, managed by JS */
+    transition: opacity 0.3s ease;
+}
+
+.controls-container.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.controls-container button {
+    pointer-events: auto;
+}
+
+.btn-left,
+.btn-right {
+    position: absolute;
+    width: 8vmin;
+    height: 8vmin;
+    background: url('assets/icon_arrow.png') no-repeat center center;
+    background-size: contain;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s;
+    /* Add tap highlight logic for mobile */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-left {
+    left: -10vmin;
+    transform: scaleX(-1);
+}
+
+.btn-right {
+    right: -10vmin;
 }
 
 .finish-btn,

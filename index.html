@@ -31,6 +31,11 @@
                     <div class="loading-text">Loading...</div>
                 </div>
 
+                <!-- Start Generation Overlay (Moved inside Stage) -->
+                <div id="startGenerationOverlay" class="start-overlay hidden">
+                    <button id="btnStartGeneration" class="start-btn">立即生成</button>
+                </div>
+
                 <div class="stage-bg"></div>
                 <img src="assets/exclude.png" class="overlay-mask" alt="overlay">
 
@@ -88,37 +93,33 @@
 
 
                 <!-- Side Controls (Grouped in Wrapper) -->
-                <div class="controls-wrapper">
-                    <button id="btnLeft" class="control-btn left-btn" aria-label="Previous">
-                        <img src="assets/icon_arrow.png" alt="Left">
-                    </button>
-                    <button id="btnReset" class="control-btn reset-btn" aria-label="Reset">
-                        <img src="assets/icon_reset.png" alt="Reset">
-                    </button>
-                    <button id="btnRight" class="control-btn right-btn" aria-label="Next">
-                        <img src="assets/icon_arrow.png" alt="Right">
-                    </button>
-                    <!-- Finish Button -->
+                <!-- Controls Container (Arrows) - Initially Hidden -->
+                <div id="controlsContainer" class="controls-container hidden">
+                    <button id="btnLeft" class="btn-left" aria-label="Previous"></button>
+                    <button id="btnRight" class="btn-right" aria-label="Next"></button>
                 </div>
 
-                <!-- Top-Right Info Panel -->
-                <div class="info-panel">
-                    <div class="info-line">风格：<span id="styleLabel">--</span></div>
-                    <div class="info-line">描述：<span id="wordLabel">--</span></div>
-                </div>
+                <!-- Reset Button - Initially Hidden -->
+                <button id="btnReset" class="btn-reset hidden" aria-label="Reset"></button> <!-- Finish Button -->
             </div>
 
-            <!-- Start Generation Overlay (Initial Manual Trigger) -->
-            <div id="startGenerationOverlay" class="start-overlay hidden">
-                <button id="btnStartGeneration" class="start-btn">立即生成</button>
-            </div>
-
-            <!-- Finish/Retry Buttons Wrapper -->
-            <div class="finish-btn-wrapper hidden" id="finishBtnWrapper">
-                <button id="btnRetry" class="retry-btn">返回重试</button>
-                <button id="btnFinish" class="finish-btn">完成关卡</button>
+            <!-- Top-Right Info Panel -->
+            <div class="info-panel">
+                <div class="info-line">风格：<span id="styleLabel">--</span></div>
+                <div class="info-line">描述：<span id="wordLabel">--</span></div>
             </div>
         </div>
+
+        <!-- Start Generation Overlay (Initial Manual Trigger) -->
+        <!-- Moved inside stage for proper masking -->
+
+
+        <!-- Finish/Retry Buttons Wrapper -->
+        <div class="finish-btn-wrapper hidden" id="finishBtnWrapper">
+            <button id="btnRetry" class="retry-btn">返回重试</button>
+            <button id="btnFinish" class="finish-btn">完成关卡</button>
+        </div>
+    </div>
 
     </div>
 

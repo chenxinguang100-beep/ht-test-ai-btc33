@@ -113,6 +113,10 @@
     const btnRetry = document.getElementById('btnRetry');
     const btnFinish = document.getElementById('btnFinish');
 
+    // Controls 
+    const controlsContainer = document.getElementById('controlsContainer');
+    const btnReset = document.getElementById('btnReset');
+
     // --- Audio Manager ---
     const audioManager = {
         sounds: {
@@ -433,6 +437,10 @@
         // Hide finish/retry buttons when starting new generation
         if (finishBtnWrapper) finishBtnWrapper.classList.add('hidden');
 
+        // Hide controls during generation
+        if (controlsContainer) controlsContainer.classList.add('hidden');
+        if (btnReset) btnReset.classList.add('hidden');
+
         // UI update for "Generating" state (Sequence Scope)
         if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.remove('hidden');
         updateLoadingText('正在生成中，请稍候...'); // Helper now targets sequence overlay
@@ -521,6 +529,10 @@
                     interactionHint.classList.add('active');
                 }
                 // Auto-play is already enabled by default in state
+
+                // Show Controls (Arrows + Reset)
+                if (controlsContainer) controlsContainer.classList.remove('hidden');
+                if (btnReset) btnReset.classList.remove('hidden');
             }, remaining);
         }
     }
@@ -634,6 +646,7 @@
                 state.pauseStartTime = Date.now();
 
                 // One loop complete: Show Finish/Retry buttons
+                // Strict check: only show if not already shown
                 if (finishBtnWrapper && finishBtnWrapper.classList.contains('hidden')) {
                     finishBtnWrapper.classList.remove('hidden');
                 }
