@@ -486,8 +486,12 @@
                 sequenceCanvas.classList.remove('hidden'); // Reveal sequence
 
                 // Show interaction hint after sequence is revealed
+                // Only show if not seen in this session
                 if (interactionHint) {
-                    interactionHint.classList.add('active');
+                    if (!sessionStorage.getItem('h5_guide_shown')) {
+                        interactionHint.classList.add('active');
+                        sessionStorage.setItem('h5_guide_shown', 'true');
+                    }
                 }
                 // Auto-play is already enabled by default in state
             }, remaining);
