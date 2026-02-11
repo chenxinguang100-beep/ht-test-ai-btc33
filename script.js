@@ -892,13 +892,17 @@
 
         if (style && style !== state.style) {
             state.style = style;
-            if (styleSelect) styleSelect.value = style; // Sync UI
+            // Sync Debug UI if present (styleSelect is created by mock.js)
+            var _styleSelect = document.getElementById('styleSelect');
+            if (_styleSelect) _styleSelect.value = style;
             needsUpdate = true;
         }
 
         if (word && word !== state.word) {
             state.word = word;
-            if (wordSelect) wordSelect.value = word; // Sync UI
+            // Sync Debug UI if present (wordSelect is created by mock.js)
+            var _wordSelect = document.getElementById('wordSelect');
+            if (_wordSelect) _wordSelect.value = word;
             needsUpdate = true;
         }
 
