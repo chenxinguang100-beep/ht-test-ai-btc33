@@ -108,8 +108,14 @@
                 </div>
             </div>
 
-            <!-- Finish Button - 完成关卡 -->
-            <div class="finish-btn-wrapper">
+            <!-- Start Generation Overlay (Initial Manual Trigger) -->
+            <div id="startGenerationOverlay" class="start-overlay hidden">
+                <button id="btnStartGeneration" class="start-btn">立即生成</button>
+            </div>
+
+            <!-- Finish/Retry Buttons Wrapper -->
+            <div class="finish-btn-wrapper hidden" id="finishBtnWrapper">
+                <button id="btnRetry" class="retry-btn">返回重试</button>
                 <button id="btnFinish" class="finish-btn">完成关卡</button>
             </div>
         </div>

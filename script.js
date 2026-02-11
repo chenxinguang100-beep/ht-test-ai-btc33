@@ -107,6 +107,11 @@
     const interactionHint = document.getElementById('interactionHint');
     const hintIcon = document.getElementById('hintIcon');
     const hintText = document.getElementById('hintText');
+    const btnStartGeneration = document.getElementById('btnStartGeneration');
+    const startGenerationOverlay = document.getElementById('startGenerationOverlay');
+    const finishBtnWrapper = document.getElementById('finishBtnWrapper');
+    const btnRetry = document.getElementById('btnRetry');
+    const btnFinish = document.getElementById('btnFinish');
 
     // --- Audio Manager ---
     const audioManager = {
@@ -345,8 +350,34 @@
         // If deep linking starts, it will immediately show the sequence overlay.
         if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
 
+        // Show Start Generation Overlay instead of auto-playing
+        if (startGenerationOverlay) {
+            startGenerationOverlay.classList.remove('hidden');
+
+            // Bind Start Action
+            const handleStartGen = () => {
+                startGenerationOverlay.classList.add('hidden');
+
+                // Unlock audio context immediately on user interaction
+                audioManager.sounds.bgm.play().catch(e => console.log('BGM Autoplay allowed check'));
+                audioManager.play('matrix'); // Play matrix sound
+
+                // Check if we have pending URL params to process
+                if (state.pendingParams) {
+                    handleExternalCommand(state.pendingParams);
+                    state.pendingParams = null;
+                } else {
+                    // Just start matrix effect if no params yet (waiting state)
+                    // But usually we have params by now or will get them
+                }
+            };
+
+            btnStartGeneration.addEventListener('click', handleStartGen);
+            btnStartGeneration.addEventListener('touchend', handleStartGen); // fast click
+        }
+
         // Auto-play BGM immediately after loading (as requested)
-        audioManager.play('bgm');
+        // audioManager.play('bgm'); // XML: Moved to handleStartGen
         // updateLoadingText('Loading...'); // Static text in HTML is fine
         // matrixEffect.start(); // Do not start yet
 
@@ -381,10 +412,8 @@
 
         if (urlStyle && urlWord) {
             console.log(`URL Params found: style=${urlStyle}, word=${urlWord}`);
-            // Small delay to ensure everything is ready
-            setTimeout(() => {
-                handleExternalCommand({ style: urlStyle, word: urlWord });
-            }, 500);
+            // Store params to be triggered after "Start Generation" click
+            state.pendingParams = { style: urlStyle, word: urlWord };
         }
     }
 
@@ -401,12 +430,15 @@
         // Hide global initial loader if still visible
         if (globalLoadingOverlay) globalLoadingOverlay.classList.add('hidden');
 
+        // Hide finish/retry buttons when starting new generation
+        if (finishBtnWrapper) finishBtnWrapper.classList.add('hidden');
+
         // UI update for "Generating" state (Sequence Scope)
         if (sequenceLoadingOverlay) sequenceLoadingOverlay.classList.remove('hidden');
         updateLoadingText('正在生成中，请稍候...'); // Helper now targets sequence overlay
 
         matrixEffect.start(); // Start Matrix Rain
-        audioManager.play('matrix'); // Start Matrix Sound
+        // audioManager.play('matrix'); // XML: handled in start button or here if already playing is fine
 
         sequenceCanvas.classList.add('hidden'); // Hide sequence during loading
 
@@ -500,6 +532,8 @@
         if (loadingText) {
             loadingText.innerHTML = `<span style="color: #ff6b6b; font-size: 14px;">${message}</span>`;
         }
+        // Show Retry button on error
+        if (finishBtnWrapper) finishBtnWrapper.classList.remove('hidden');
     }
 
     function updateLoadingText(text) {
@@ -515,10 +549,12 @@
     function handleLoadTimeout() {
         if (state.assetsLoaded) return; // Race condition check
         console.error('Loading timed out (30s)');
-        updateLoadingText('生成失败 (超时)');
+        updateLoadingText('加载失败，请返回重试');
         matrixEffect.stop();
         audioManager.stop('matrix');
         // Keep overlay visible to show error
+        // Show Retry button on timeout
+        if (finishBtnWrapper) finishBtnWrapper.classList.remove('hidden');
     }
 
     function resizeCanvas() {
@@ -596,6 +632,11 @@
                 state.isAutoPlaying = false;
                 state.mode = 'PAUSE_AT_START';
                 state.pauseStartTime = Date.now();
+
+                // One loop complete: Show Finish/Retry buttons
+                if (finishBtnWrapper && finishBtnWrapper.classList.contains('hidden')) {
+                    finishBtnWrapper.classList.remove('hidden');
+                }
             }
         }
         // 3. Pause at start - wait briefly then restart auto-play
@@ -839,17 +880,24 @@
         }
 
         const btnFinish = document.getElementById('btnFinish');
+        // Unbind old events if any? No easy way, but likely only called once.
         if (btnFinish) {
-            btnFinish.addEventListener('click', function () {
-                audioManager.play('success'); // Play positive sound
-                console.log('User clicked Finish');
-                // Send success result (no alert)
-                sendResult({
-                    success: true,
-                    finished: true,
-                    timestamp: Date.now()
-                });
-            });
+            // Remove old listener if possible or just add new one. 
+            // cloneNode to strip old listeners is a trick, but might break refs.
+            // Since this is init, we are fine.
+            btnFinish.onclick = function () {
+                audioManager.play('success');
+                sendResult({ success: true, finished: true });
+            };
+        }
+
+        const btnRetry = document.getElementById('btnRetry');
+        if (btnRetry) {
+            btnRetry.onclick = function () {
+                audioManager.play('click');
+                // Send success: false to indicate incomplete/closed
+                sendResult({ success: false, closed: true });
+            };
         }
 
 
@@ -915,7 +963,13 @@
 
         if (needsUpdate || state.isWaiting) {
             state.isWaiting = false; // logic enabled
-            loadSequence(state.style, state.word);
+            // If already clicked start generation, load immediately
+            // If not, store as pending (handled in init -> handleStartGen)
+            if (startGenerationOverlay && startGenerationOverlay.classList.contains('hidden')) {
+                loadSequence(state.style, state.word);
+            } else {
+                state.pendingParams = { style: state.style, word: state.word };
+            }
             console.log('External command applied:', content);
         }
     }
@@ -924,14 +978,14 @@
         // Temporarily force v1 as requested (Single variant mode)
         return 1;
 
-        /* 
+        /*
         // Original Logic:
         const key = `h5_seq_count_${style}_${word}`;
         let count = parseInt(localStorage.getItem(key) || '0');
         count++;
         localStorage.setItem(key, count);
         const variantNum = Math.min(count, 3);
-        state.currentVariant = `v${variantNum}`; 
+        state.currentVariant = `v${variantNum}`;
         return variantNum;
         */
     }

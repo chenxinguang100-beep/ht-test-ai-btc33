@@ -118,19 +118,67 @@ html {
     opacity: 0;
 }
 
-/* Loading Overlay */
-.loading-overlay {
+/* --- Overlay Mask (Start Generation & Loading) --- */
+.loading-overlay,
+.start-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    z-index: 20;
+    pointer-events: none;
+    /* Let clicks pass initially, but buttons need pointer-events: auto */
+}
+
+/* Specific for Start Overlay - needs to block interaction */
+.start-overlay {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    /* Darken background */
+    pointer-events: auto;
+    /* Enable interaction */
+    z-index: 30;
+    /* Higher than loading */
+}
+
+.start-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.2vmin;
+    font-family: 'FZZY', sans-serif;
+    color: white;
+    background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: pulse 2s infinite;
+}
+
+.start-btn:active {
+    transform: scale(0.95);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(0, 242, 254, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 242, 254, 0);
+    }
 }
 
 .loading-overlay.hidden {
@@ -149,9 +197,11 @@ html {
 
 /* Sequence overlay - Scoped to container */
 .sequence-scope {
-    z-index: 1000;
-    /* Background handled by parent container or transparent if matrix is behind */
-    background: rgba(0, 0, 0, 0.4);
+    /* Scoped to sequence container */
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 2vmin;
 }
 
 /* Spinner styling */
@@ -683,32 +733,48 @@ body.is-pc .drag-hand .icon-mouse {
     }
 }
 
-/* Finish Button - 完成关卡按钮 */
+/* --- Finish Button Wrapper --- */
 .finish-btn-wrapper {
     position: absolute;
-    top: calc(100% + 2vmin);
-    /* Fixed percentage distance below the stage (window-frame) */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    white-space: nowrap;
+    bottom: -8vmin;
+    /* Position below the main window */
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 2vmin;
+    /* Spacing between buttons */
+    pointer-events: auto;
+}
+
+.finish-btn,
+.retry-btn {
+    padding: 1.5vmin 5vmin;
+    font-size: 2.2vmin;
+    font-family: 'FZZY', sans-serif;
+    /* Ensure cloud font matches */
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    color: white;
 }
 
 .finish-btn {
-    display: inline-block;
-    padding: 1.5vmin 5vmin;
-    font-size: 2.2vmin;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(135deg, #00c8e8 0%, #00a0c6 100%);
-    border: none;
-    border-radius: 4vmin;
-    cursor: pointer;
-    box-shadow: 0 0 2vmin rgba(0, 200, 232, 0.5),
-        0 0.5vmin 2vmin rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    text-shadow: 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.2vmin;
+    background: linear-gradient(180deg, #66d3e6 0%, #4cb8c9 100%);
+    box-shadow: 0 4px 10px rgba(76, 184, 201, 0.3);
+}
+
+.retry-btn {
+    background: linear-gradient(180deg, #ff7e5f 0%, #feb47b 100%);
+    /* Warm orange/red */
+    box-shadow: 0 4px 10px rgba(255, 126, 95, 0.3);
+}
+
+.finish-btn:active,
+.retry-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
 }
 
 .finish-btn:hover {
