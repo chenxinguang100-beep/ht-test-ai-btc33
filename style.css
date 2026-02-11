@@ -766,7 +766,8 @@ body.is-pc .drag-hand .icon-mouse {
 (max-height: 480px) {
 
     /* Ensure finish button is tappable (min 44px touch target) */
-    .finish-btn {
+    .finish-btn,
+    .retry-btn {
         font-size: 14px;
         padding: 10px 28px;
         border-radius: 22px;
