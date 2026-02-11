@@ -468,8 +468,8 @@
             // Show warning if some images failed to load
             if (failed > 0) {
                 console.warn(`${failed} of ${total} images failed to load. Using fallback placeholders.`);
-                showLoadingError(`部分图片加载失败 (${failed}/${total})`);
-                if (window.showFinishButtons) window.showFinishButtons();
+                showLoadingError('加载失败，请返回重试');
+                return; // Stop here, keep overlay visible
             }
 
             // Enforce minimum 5 seconds loading time (Requested optimization)
@@ -516,9 +516,7 @@
     function handleLoadTimeout() {
         if (state.assetsLoaded) return; // Race condition check
         console.error('Loading timed out (30s)');
-        updateLoadingText('生成失败 (超时)');
-        showLoadingError('加载失败，请返回重试');
-        if (window.showFinishButtons) window.showFinishButtons();
+        updateLoadingText('加载失败，请返回重试');
         matrixEffect.stop();
         audioManager.stop('matrix');
         // Keep overlay visible to show error
@@ -599,7 +597,6 @@
                 state.isAutoPlaying = false;
                 state.mode = 'PAUSE_AT_START';
                 state.pauseStartTime = Date.now();
-                if (window.showFinishButtons) window.showFinishButtons();
             }
         }
         // 3. Pause at start - wait briefly then restart auto-play
@@ -796,15 +793,16 @@
     }
 
     // --- Events ---
-    // Feature-detect passive event listener support
+    // Feature-detect passive event listener support (Chrome 51+, older WebViews may not support)
     var supportsPassive = false;
     try {
         var opts = Object.defineProperty({}, 'passive', {
             get: function () { supportsPassive = true; }
         });
-        window.addEventListener("testPassive", null, opts);
-        window.removeEventListener("testPassive", null, opts);
+        window.addEventListener('testPassive', null, opts);
+        window.removeEventListener('testPassive', null, opts);
     } catch (e) { }
+    var passiveFalse = supportsPassive ? { passive: false } : false;
 
     function bindEvents() {
         // Button Interactions
@@ -832,86 +830,89 @@
             });
         }
 
-        // Finish Button Logic
-        const btnFinishWrapper = document.getElementById('finishBtnWrapper');
+        const btnReset = document.getElementById('btnReset');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                audioManager.play('click');
+                state.isResetting = true;
+                state.mode = 'RESET';
+            });
+        }
+
         const btnFinish = document.getElementById('btnFinish');
-        const btnRetry = document.getElementById('btnRetry');
-
         if (btnFinish) {
-            btnFinish.addEventListener('click', () => {
-                audioManager.play('click');
-                // Send 'success' to Parent (Python) via PostMessage
-                sendResult({ success: true, finished: true });
-            });
-            // Touch support
-            btnFinish.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                audioManager.play('click');
-                sendResult({ success: true, finished: true });
+            btnFinish.addEventListener('click', function () {
+                audioManager.play('success'); // Play positive sound
+                console.log('User clicked Finish');
+                // Send success result (no alert)
+                sendResult({
+                    success: true,
+                    finished: true,
+                    timestamp: Date.now()
+                });
             });
         }
 
+        const btnRetry = document.getElementById('btnRetry');
         if (btnRetry) {
-            btnRetry.addEventListener('click', () => {
+            btnRetry.addEventListener('click', function () {
                 audioManager.play('click');
-                // Send 'closed' result to signal window close without success
-                sendResult({ success: false, closed: true });
-            });
-            btnRetry.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                audioManager.play('click');
-                sendResult({ success: false, closed: true });
+                console.log('User clicked Retry');
+                sendResult({
+                    success: false,
+                    closed: true
+                });
             });
         }
+
+
 
         // Canvas Interactions
-        const passiveFalse = supportsPassive ? { passive: false } : false;
-
         container.addEventListener('mousedown', (e) => handleStart(e.clientX));
         window.addEventListener('mousemove', (e) => handleMove(e.clientX));
         window.addEventListener('mouseup', handleEnd);
 
         container.addEventListener('touchstart', function (e) { handleStart(e.touches[0].clientX); }, passiveFalse);
         window.addEventListener('touchmove', function (e) {
-            if (e.cancelable) e.preventDefault();
+            e.preventDefault();
             handleMove(e.touches[0].clientX);
         }, passiveFalse);
         window.addEventListener('touchend', handleEnd);
 
-        // Window Resize
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-            if (matrixCanvas && matrixEffect) matrixEffect.resize();
-        });
-
         // PostMessage Listener
         window.addEventListener('message', (event) => {
-            // Check origin if necessary, but for now allow *
-            try {
-                const data = event.data;
-                if (data && data.cmd === 'py_btc_ai2_3_3' && data.content) {
-                    handleExternalCommand(data.content);
-                }
-            } catch (e) { }
+            const data = event.data;
+            if (!data || !data.cmd) return;
+
+            // WebView 关闭事件：回传 result（不过关）让 Python 跳出循环
+            if (data.cmd === 'onClickClose') {
+                console.log('Received onClickClose from WebView');
+                sendResult({ success: false, closed: true });
+                return;
+            }
+
+            // 正常业务指令
+            if (data.cmd === 'py_btc_ai2_3_3' && data.content) {
+                handleExternalCommand(data.content);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
         });
     }
 
-    // Helper: Show Finish Buttons
-    // Hoisted so it can be called from anywhere
-    window.showFinishButtons = function () {
-        const btnFinishWrapper = document.getElementById('finishBtnWrapper');
-        if (btnFinishWrapper) {
-            btnFinishWrapper.classList.remove('hidden');
-        }
-    };
-
     function handleExternalCommand(content) {
         const { style, word } = content;
+
+        // Validate if needed, or just trust/fallback
+        // Ideally checking against CONFIG would be good, but for now we trust or let it 404
 
         let needsUpdate = false;
 
         if (style && style !== state.style) {
             state.style = style;
+            // Sync Debug UI if present (styleSelect is created by mock.js)
             var _styleSelect = document.getElementById('styleSelect');
             if (_styleSelect) _styleSelect.value = style;
             needsUpdate = true;
@@ -919,6 +920,7 @@
 
         if (word && word !== state.word) {
             state.word = word;
+            // Sync Debug UI if present (wordSelect is created by mock.js)
             var _wordSelect = document.getElementById('wordSelect');
             if (_wordSelect) _wordSelect.value = word;
             needsUpdate = true;
@@ -932,29 +934,61 @@
     }
 
     function getVariantForSequence(style, word) {
-        // Temporarily force v1 as requested
+        // Temporarily force v1 as requested (Single variant mode)
         return 1;
+
+        /* 
+        // Original Logic:
+        const key = `h5_seq_count_${style}_${word}`;
+        let count = parseInt(localStorage.getItem(key) || '0');
+        count++;
+        localStorage.setItem(key, count);
+        const variantNum = Math.min(count, 3);
+        state.currentVariant = `v${variantNum}`; 
+        return variantNum;
+        */
     }
 
+
+
+
+    // --- Message Protocol Implementation ---
+
+    // Send completion signal to Python backend
+    // Validates the protocol: { cmd: 'result', content: { ... } }
     function sendResult(customContent) {
         customContent = customContent || {};
         var content = {
+            // Default content fields expected by check scripts
             style: state.style,
             word: state.word,
             timestamp: Date.now()
         };
-        Object.assign(content, customContent); // Chrome 59 compatible
+        // Chrome 59 compatible: use Object.assign instead of spread operator
+        Object.assign(content, customContent);
         var payload = {
             cmd: 'result',
             content: content
         };
-        console.log('Sending Result:', payload);
+
+        console.log('Sending Result to Parent:', payload);
+
         if (window.parent) {
             window.parent.postMessage(payload, '*');
+        } else {
+            console.warn('No window.parent found to send result');
         }
     }
 
-    // Expose init
-    window.onload = init;
+    // Expose for external testing if needed
+    window.h5Sender = {
+        sendResult: sendResult
+    };
+
+    // --- Events ---
+    // ... (bindEvents is above)
+
+    // Start
+    init();
 
 })();
