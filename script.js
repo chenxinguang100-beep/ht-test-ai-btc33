@@ -139,6 +139,13 @@
 
             document.addEventListener('click', unlockAudio);
             document.addEventListener('touchstart', unlockAudio);
+
+            // WeChat Autoplay Workaround
+            const wechatAutoPlay = () => {
+                this.sounds.bgm.play().catch(() => { });
+                document.removeEventListener("WeixinJSBridgeReady", wechatAutoPlay, false);
+            };
+            document.addEventListener("WeixinJSBridgeReady", wechatAutoPlay, false);
         },
         play(name) {
             const sound = this.sounds[name];
