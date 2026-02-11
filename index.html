@@ -93,15 +93,26 @@
 
 
                 <!-- Side Controls (Grouped in Wrapper) -->
-                <!-- Controls Container (Arrows) - Initially Hidden -->
-                <div id="controlsContainer" class="controls-container hidden">
-                    <button id="btnLeft" class="btn-left" aria-label="Previous"></button>
-                    <button id="btnRight" class="btn-right" aria-label="Next"></button>
+                <!-- Side Controls (Grouped in Wrapper) - Initially Hidden -->
+                <!-- Use controls-wrapper class for restored layout -->
+                <div id="controlsContainer" class="controls-wrapper hidden">
+                    <button id="btnLeft" class="control-btn left-btn" aria-label="Previous">
+                        <img src="assets/icon_arrow.png" alt="Left">
+                    </button>
+                    <button id="btnReset" class="control-btn reset-btn" aria-label="Reset">
+                        <img src="assets/icon_reset.png" alt="Reset">
+                    </button>
+                    <button id="btnRight" class="control-btn right-btn" aria-label="Next">
+                        <img src="assets/icon_arrow.png" alt="Right">
+                    </button>
                 </div>
 
-                <!-- Reset Button - Initially Hidden -->
-                <button id="btnReset" class="btn-reset hidden" aria-label="Reset"></button> <!-- Finish Button -->
-            </div>
+                <!-- Finish/Retry Buttons Wrapper (Moved Inside Frame) -->
+                <div class="finish-btn-wrapper hidden" id="finishBtnWrapper">
+                    <button id="btnRetry" class="retry-btn">返回重试</button>
+                    <button id="btnFinish" class="finish-btn">完成关卡</button>
+                </div>
+            </div><!-- End of window-frame -->
 
             <!-- Top-Right Info Panel -->
             <div class="info-panel">
@@ -114,11 +125,6 @@
         <!-- Moved inside stage for proper masking -->
 
 
-        <!-- Finish/Retry Buttons Wrapper -->
-        <div class="finish-btn-wrapper hidden" id="finishBtnWrapper">
-            <button id="btnRetry" class="retry-btn">返回重试</button>
-            <button id="btnFinish" class="finish-btn">完成关卡</button>
-        </div>
     </div>
 
     </div>

@@ -294,27 +294,7 @@ html {
     z-index: 1;
 }
 
-.btn-reset {
-    position: absolute;
-    top: 2vmin;
-    right: 2vmin;
-    width: 5vmin;
-    height: 5vmin;
-    background: url('assets/icon_reset.png') no-repeat center center;
-    background-size: contain;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    opacity: 0.7;
-    transition: opacity 0.2s, transform 0.2s;
-    z-index: 16;
-}
-
-/* Hide reset initially too */
-.btn-reset.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
+/* Reset Button styles moved to control-btn */
 
 /* macOS Window Header */
 .window-header {
@@ -685,51 +665,79 @@ body.is-pc .drag-hand .icon-mouse {
     pointer-events: auto;
 }
 
-/* Controls (Arrows & Reset) */
-.controls-container {
+/* Controls Wrapper - Flex Container */
+.controls-wrapper {
     position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    z-index: 15;
-    /* Initially hidden via class, managed by JS */
+    /* Match sequence-container horizontal position */
+    left: 15%;
+    width: 43.125%;
+
+    /* Position below sequence */
+    bottom: 0%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+
+    /* Initially hidden */
     transition: opacity 0.3s ease;
+    opacity: 1;
 }
 
-.controls-container.hidden {
+.controls-wrapper.hidden {
     opacity: 0;
     pointer-events: none;
 }
 
-.controls-container button {
+/* Control Buttons - Icon Based */
+.control-btn {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 8vmin;
+    height: 8vmin;
+    /* Fix clickable area */
     pointer-events: auto;
 }
 
-.btn-left,
-.btn-right {
-    position: absolute;
-    width: 8vmin;
-    height: 8vmin;
-    background: url('assets/icon_arrow.png') no-repeat center center;
-    background-size: contain;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    opacity: 0.8;
-    transition: opacity 0.2s, transform 0.2s;
-    /* Add tap highlight logic for mobile */
-    -webkit-tap-highlight-color: transparent;
+.control-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4));
+    transition: filter 0.3s ease;
 }
 
-.btn-left {
-    left: -10vmin;
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+.control-btn:hover img {
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8));
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.right-btn {
     transform: scaleX(-1);
+    /* Flip right arrow */
 }
 
-.btn-right {
-    right: -10vmin;
+.right-btn:hover {
+    transform: scaleX(-1) scale(1.1);
+}
+
+.right-btn:active {
+    transform: scaleX(-1) scale(0.95);
 }
 
 .finish-btn,
