@@ -686,76 +686,66 @@ body.is-pc .drag-hand .icon-mouse {
 /* Finish Button - 完成关卡按钮 */
 .finish-btn-wrapper {
     position: absolute;
-    top: calc(100% + 2vmin);
-    /* Fixed percentage distance below the stage (window-frame) */
+    /* top: calc(100% + 2vmin);  Old position */
+    /* Match h5_dynamic_card position strategy */
+    top: calc(100% + 3vmin);
     left: 50%;
     transform: translateX(-50%);
     z-index: 2001;
-    /* Above global overlay (2000) */
+    /* Above global overlay */
     white-space: nowrap;
     display: flex;
-    /* Flex layout */
-    gap: 4vmin;
-    /* Space between buttons */
+    /* gap: 2vmin; GAP NOT SUPPORTED IN CHROME 59 (Flexbox) -> Used margin instead */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Chrome 59 compatible spacing */
+.finish-btn-wrapper .retry-btn {
+    margin-right: 2vmin;
 }
 
 .finish-btn,
 .retry-btn {
     display: inline-block;
-    padding: 1.5vmin 5vmin;
-    /* Increased padding */
-    font-size: 2.2vmin;
-    font-weight: bold;
-    color: #fff;
-    border: none;
-    border-radius: 4vmin;
+    padding: 1.5vmin 6vmin;
+    /* 0.15rem 0.6rem -> 1.5vmin 6vmin */
+    font-size: 1.8vmin;
+    /* 0.18rem -> 1.8vmin */
+    font-weight: normal;
+    /* Remove bold */
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+    /* Glass background */
+
+    /* iOS Safari / Modern Browsers Glass Effect */
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* Thin border */
+    border-radius: 3.5vmin;
+    /* 0.35rem -> 3.5vmin */
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: none;
+    /* Remove glow */
+    transition: background 0.2s ease, transform 0.2s ease;
     text-shadow: 0 0.1vmin 0.2vmin rgba(0, 0, 0, 0.3);
     letter-spacing: 0.2vmin;
-}
-
-.finish-btn {
-    background: linear-gradient(135deg, #00c8e8 0%, #00a0c6 100%);
-    box-shadow: 0 0 2vmin rgba(0, 200, 232, 0.5),
-        0 0.5vmin 2vmin rgba(0, 0, 0, 0.3);
-}
-
-.retry-btn {
-    background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
-    /* Red/Coral Gradient */
-    box-shadow: 0 0 2vmin rgba(255, 107, 107, 0.5),
-        0 0.5vmin 2vmin rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Keep local font */
 }
 
 .finish-btn:hover,
 .retry-btn:hover {
-    transform: scale(1.05);
-}
-
-.finish-btn:hover {
-    box-shadow: 0 0 30px rgba(0, 200, 232, 0.7),
-        0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.retry-btn:hover {
-    box-shadow: 0 0 30px rgba(255, 107, 107, 0.7),
-        0 6px 20px rgba(0, 0, 0, 0.4);
+    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .finish-btn:active,
 .retry-btn:active {
     transform: scale(0.98);
-}
-
-.finish-btn:active {
-    box-shadow: 0 0 15px rgba(0, 200, 232, 0.4),
-        0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.retry-btn:active {
-    box-shadow: 0 0 15px rgba(255, 107, 107, 0.4),
-        0 2px 10px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* ===== Small Screen & Tablet Compatibility ===== */
